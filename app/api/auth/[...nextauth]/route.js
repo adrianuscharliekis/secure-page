@@ -6,7 +6,6 @@ export const authOptions = {
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        // ... your credentials definition
       },
       async authorize(credentials, req) {
         const { ca_code, payload, timestamp, productType } = credentials;

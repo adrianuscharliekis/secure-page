@@ -8,18 +8,16 @@ import Loading from "@/components/Loading";
 export default function LoginHandler() {
   const searchParams = useSearchParams();
   const ca_code = searchParams.get("ca_code");
-  const payload = searchParams.get("payload");
+  const payload = searchParams.get("signature");
   const timestamp = searchParams.get("timestamp");
-  const redirect = searchParams.get("redirect") || "/secure";
-  const splitted = redirect.split("/");
-  const productType = splitted[splitted.length - 1];
-
+  const productType = searchParams.get("product");
+  const redirect = "/secure/" + productType;
   useEffect(() => {
     if (!ca_code || !payload) {
-        console.error("Login parameters are missing.");
-        return;
+      console.error("Login parameters are missing.");
+      return;
     }
-    
+
     const login = async () => {
       await signIn("credentials", {
         ca_code,

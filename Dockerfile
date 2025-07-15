@@ -48,7 +48,7 @@ ENV HOSTNAME="0.0.0.0"
 # Create user for better security
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
-
+ENV TZ=Asia/Jakarta
 WORKDIR /app
 
 # Copy only necessary files
