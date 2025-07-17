@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
+import ReactDOM from "react-dom";
 import PassengerDetailModal from "@/components/sindoferry/PassengerDetail";
 import TripCard from "@/components/sindoferry/TripCard";
 import {
@@ -11,6 +12,8 @@ import {
   ChevronUp,
   Mail,
   User,
+  X,
+  AlertCircle,
 } from "lucide-react";
 import ImportantNotes from "@/components/sindoferry/ImportantNotes";
 import Confirmation from "@/public/assets/jagaan detail.png";
@@ -28,12 +31,32 @@ const FormDetail = ({
   const [modalOpenIndex, setModalOpenIndex] = useState(null);
   const [isCollapse, setIsCollapse] = useState(false);
   const [confirmation, setConfirmation] = useState(false);
-  // State for contact details and errors is now managed locally in this component.
   const [contact, setContact] = useState(
     formData.contactDetails || { fullName: "", email: "" }
   );
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const [bookingError, setBookingError] = useState(null);
+
+  // Effect to ensure component is mounted before using portals
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Effect to lock body scroll when confirmation modal is open
+  useEffect(() => {
+    if (confirmation) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    // Cleanup function to reset the overflow when the component unmounts
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [confirmation]);
 
   const handlePassengerSubmit = useCallback(
     (index, updatedPassenger) => {
@@ -44,30 +67,28 @@ const FormDetail = ({
     [formData.passengers, updateFormData]
   );
 
-  // Handler for contact detail changes
   const handleContactChange = (e) => {
     const { name, value } = e.target;
-    setContact((prev) => ({ ...prev, [name]: value }));
+    if (name === 'fullName') {
+      const filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
+      setContact((prev) => ({ ...prev, [name]: filteredValue }));
+    } else {
+      setContact((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
-  // Simple email validation regex
   const validateEmail = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
-  // Validation logic for the entire form before showing confirmation
   const validateForm = () => {
     const newErrors = {};
-
-    // Validate all passengers have names
     const allPassengersFilled = formData.passengers.every(
       (p) => p.fullName && p.fullName.trim() !== ""
     );
     if (!allPassengersFilled) {
       newErrors.passengers = "Harap lengkapi semua data penumpang.";
     }
-
-    // Validate contact details
     if (!contact.fullName.trim()) {
       newErrors.fullName = "Nama lengkap kontak wajib diisi";
     }
@@ -76,14 +97,12 @@ const FormDetail = ({
     } else if (!validateEmail(contact.email)) {
       newErrors.email = "Format email tidak valid";
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleContinue = () => {
     if (validateForm()) {
-      // If valid, update the master form data and show confirmation
       updateFormData({ contactDetails: contact });
       setConfirmation(true);
     }
@@ -108,14 +127,40 @@ const FormDetail = ({
   );
 
   const ticketLabel = formData.passengers.length > 1 ? "Dewasa" : "Penumpang";
+  
   const submitBooking = async () => {
-    // setLoading(true);
-    await createBooking(formData, countries);
-    // setLoading(false);
+    setLoading(true);
+    setBookingError(null); // Reset previous errors
+    try {
+      const data = await createBooking(formData, countries);
+      
+      if (data && data.success && data.data) {
+        const url = new URL(process.env.NEXT_PUBLIC_URL_DEEP_LINK);
+        const param = {
+          plu: data.data.plu === null ? "" : data.data.plu,
+          paymentcode: data.data.data,
+          trxid: data.data.trxToko,
+        };
+        url.search = new URLSearchParams(param).toString();
+        console.log("Redirecting to payment:", url.toString());
+        window.location.replace(url.toString());
+      } else {
+        // Handle cases where booking is not successful but doesn't throw an error
+        setBookingError(data?.message || "Booking failed. Please try again.");
+        setConfirmation(false); // Close the confirmation modal
+      }
+    } catch (error) {
+      console.error("An actual error occurred during booking:", error);
+      // Set a user-friendly error message from the caught error
+      setBookingError(error.response?.data?.message || error.message || "An unexpected error occurred.");
+      setConfirmation(false); // Close the confirmation modal
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (loading) {
-    return <LoadingSpinner isOpen={loading} />;
+  if (!isMounted) {
+    return <LoadingSpinner isOpen={true} />;
   }
 
   return (
@@ -129,6 +174,22 @@ const FormDetail = ({
           <h1 className="font-semibold">Detail Perjalanan</h1>
         </div>
       </div>
+      
+      {/* Booking Error Notification */}
+      {bookingError && (
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 m-4 rounded-md relative" role="alert">
+          <div className="flex">
+            <div className="py-1"><AlertCircle className="h-6 w-6 text-red-500 mr-4"/></div>
+            <div>
+              <p className="font-bold">Booking Gagal</p>
+              <p className="text-sm">{bookingError}</p>
+            </div>
+            <button onClick={() => setBookingError(null)} className="absolute top-0 bottom-0 right-0 px-4 py-3">
+              <X className="h-6 w-6"/>
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="p-4 space-y-6 pt-4">
         {/* Outbound */}
@@ -144,7 +205,7 @@ const FormDetail = ({
           <TripCard
             trip={formData.outbound.trip}
             route={formData.outbound.route}
-            onSelect={() => {}} // This is a summary card, no action needed
+            onSelect={() => {}}
           />
         </div>
 
@@ -347,43 +408,55 @@ const FormDetail = ({
           </div>
         </div>
 
-        {/* Confirmation Modal */}
-        {confirmation && (
-          <>
-            {/* Backdrop with a lower z-index */}
-            <div
-              className="fixed inset-0 bg-black/30 z-40"
-              onClick={() => setConfirmation(false)}
-            />
-
-            {/* Modal Panel with a higher z-index */}
-            <div className="fixed w-full flex flex-col space-y-5 py-12 items-center justify-center inset-x-0 bottom-0 bg-white rounded-t-2xl border-t shadow-xl z-50">
-              <Image src={Confirmation} width={200} alt="confirm" />
-              <div className="text-center border-b py-5">
-                <h1 className="font-semibold text-lg">
-                  Pastikan Data Anda Telah Sesuai
-                </h1>
-                <p className="text-md text-gray-500 px-10 sm:px-24">
-                  Data yang telah diisi tidak bisa diubah lagi
-                </p>
+        {/* Confirmation Modal Portal */}
+        {confirmation &&
+          isMounted &&
+          ReactDOM.createPortal(
+            <>
+              <div
+                className="fixed inset-0 bg-black/30 z-40"
+                onClick={() => !loading && setConfirmation(false)}
+              />
+              <div className="fixed w-full flex flex-col space-y-5 py-12 items-center justify-center inset-x-0 bottom-0 bg-white rounded-t-2xl border-t shadow-xl z-50">
+                <Image src={Confirmation} width={200} alt="confirm" />
+                <div className="text-center border-b py-5">
+                  <h1 className="font-semibold text-lg">
+                    Pastikan Data Anda Telah Sesuai
+                  </h1>
+                  <p className="text-md text-gray-500 px-10 sm:px-24">
+                    Data yang telah diisi tidak bisa diubah lagi
+                  </p>
+                </div>
+                <div className="flex w-full px-10 flex-col gap-5">
+                  <button
+                    className="w-full bg-sky-500 rounded-2xl text-white px-5 py-3 flex items-center justify-center disabled:bg-sky-400 disabled:cursor-not-allowed"
+                    onClick={submitBooking}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Memproses...</span>
+                      </>
+                    ) : (
+                      "Pesan Sekarang"
+                    )}
+                  </button>
+                  <button
+                    className="w-full text-blue-600 rounded-2xl px-5 py-3 border border-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => setConfirmation(false)}
+                    disabled={loading}
+                  >
+                    Kembali
+                  </button>
+                </div>
               </div>
-              <div className="flex w-full px-10 flex-col gap-5">
-                <button
-                  className="w-full bg-sky-500 rounded-2xl text-white px-5 py-3"
-                  onClick={submitBooking}
-                >
-                  Pesan Sekarang
-                </button>
-                <button
-                  className="w-full text-blue-600 rounded-2xl px-5 py-3 border border-blue-600"
-                  onClick={() => setConfirmation(false)}
-                >
-                  Kembali
-                </button>
-              </div>
-            </div>
-          </>
-        )}
+            </>,
+            document.body
+          )}
       </div>
     </div>
   );

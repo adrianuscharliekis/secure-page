@@ -3,7 +3,10 @@ FROM node:18-alpine AS base
 WORKDIR /app
 
 # Optional for native dependencies
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat tzdata
+
+# Set timezone
+ENV TZ=Asia/Jakarta
 
 # --- Dependencies stage ---
 FROM base AS deps

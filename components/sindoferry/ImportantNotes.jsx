@@ -15,7 +15,7 @@ const ImportantNotes = () => {
         <p className="font-bold">Fare Rules:</p>
         <p>
           Please click{" "}
-          <Link href="#" className="text-blue-600 underline">
+          <Link href="https://www.sindoferry.com.sg/farerules" className="text-blue-600 underline">
             here
           </Link>{" "}
           for detailed Fare Rules.
@@ -34,7 +34,7 @@ const ImportantNotes = () => {
             passengers are required to make cash payment in Rupiah (Indonesia
             currency) at Tanjung Pinang Ferry Terminal before departure. Please
             refer to{" "}
-            <Link href="#" className="text-blue-600 underline">
+            <Link href="https://www.sindoferry.com.sg/farerules" className="text-blue-600 underline">
               here
             </Link>{" "}
             for detailed ticket fare.
@@ -55,7 +55,7 @@ const ImportantNotes = () => {
             passengers are required to make cash payment in Rupiah (Indonesia
             currency) at Tanjung Balai Ferry Terminal before departure. Please
             refer to{" "}
-            <Link href="#" className="text-blue-600 underline">
+            <Link href="https://www.sindoferry.com.sg/farerules" className="text-blue-600 underline">
               here
             </Link>{" "}
             for detailed ticket fare.
@@ -83,7 +83,7 @@ const ImportantNotes = () => {
           <li>
             Journey Times are approximate and subject to sea and weather
             conditions. Please see our{" "}
-            <Link href="#" className="text-blue-600 underline">
+            <Link href="https://www.sindoferry.com.sg/terms-and-condition" target="_blank" className="text-blue-600 underline">
               terms and conditions
             </Link>
             .

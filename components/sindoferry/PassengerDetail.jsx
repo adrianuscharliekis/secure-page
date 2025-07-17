@@ -1,9 +1,9 @@
 import { Dialog } from "@headlessui/react";
 import { X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const PassengerDetailModal = ({
-  countries,
+  countries = [],
   passengerData,
   handleOnSubmit,
   isOpen,
@@ -12,12 +12,25 @@ const PassengerDetailModal = ({
   const [passenger, setPassenger] = useState(passengerData || {});
   const [errors, setErrors] = useState({});
 
+  // Get today's date in YYYY-MM-DD format for setting max/min on date inputs
+  const today = new Date().toISOString().split("T")[0];
+
+  useEffect(() => {
+    if (isOpen) {
+      setPassenger(passengerData || {});
+      setErrors({});
+    }
+  }, [isOpen, passengerData]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // Convert gender string to number
-    if (name === "gender") {
-      setPassenger((prev) => ({ ...prev, gender: value === "L" ? 0 : 1 }));
+    if (name === "fullName") {
+      const filteredValue = value.replace(/[^a-zA-Z\s]/g, "");
+      setPassenger((prev) => ({ ...prev, [name]: filteredValue }));
+    } else if (name === "no") {
+      const filteredValue = value.replace(/[^0-9]/g, "");
+      setPassenger((prev) => ({ ...prev, [name]: filteredValue }));
     } else {
       setPassenger((prev) => ({ ...prev, [name]: value }));
     }
@@ -25,18 +38,41 @@ const PassengerDetailModal = ({
 
   const handleSubmit = () => {
     const newErrors = {};
+    const todayStr = new Date().toISOString().split("T")[0];
 
-    if (!passenger.fullName)
-      newErrors.fullName =
-        "Wajib diisi sesuai paspor (tanpa tanda baca dan gelar)";
-    if (!passenger.no) newErrors.no = "Wajib diisi";
+    // --- Enhanced Validation Logic ---
+    if (!passenger.fullName) {
+      newErrors.fullName = "Wajib diisi";
+    } else if (!/^[a-zA-Z\s]+$/.test(passenger.fullName)) {
+      newErrors.fullName = "Nama lengkap hanya boleh berisi huruf dan spasi";
+    }
+
+    if (!passenger.no) {
+      newErrors.no = "Wajib diisi";
+    } else if (!/^[0-9]+$/.test(passenger.no)) {
+      newErrors.no = "Nomor paspor hanya boleh berisi angka";
+    }
+
+    // --- FIX: Date Validation ---
+    if (!passenger.issueDate) {
+        newErrors.issueDate = "Wajib diisi";
+    } else if (passenger.issueDate > todayStr) {
+        newErrors.issueDate = "Tanggal terbit tidak boleh di masa depan";
+    }
+
+    if (!passenger.expiryDate) {
+        newErrors.expiryDate = "Wajib diisi";
+    } else if (passenger.expiryDate <= todayStr) {
+        newErrors.expiryDate = "Tanggal habis berlaku harus di masa depan";
+    } else if (passenger.issueDate && passenger.expiryDate <= passenger.issueDate) {
+        newErrors.expiryDate = "Tanggal habis berlaku harus setelah tanggal terbit";
+    }
+
     if (!passenger.dateOfBirth) newErrors.dateOfBirth = "Wajib diisi";
-    if (!passenger.issueDate) newErrors.issueDate = "Wajib diisi";
-    if (!passenger.expiryDate) newErrors.expiryDate = "Wajib diisi";
     if (!passenger.nationalityID) newErrors.nationalityID = "Wajib diisi";
-    if (!passenger.issuanceCountryID)
-      newErrors.issuanceCountryID = "Wajib diisi";
+    if (!passenger.issuanceCountryID) newErrors.issuanceCountryID = "Wajib diisi";
     if (!passenger.placeOfBirth) newErrors.placeOfBirth = "Wajib diisi";
+    if (passenger.gender === undefined) newErrors.gender = "Wajib diisi";
 
     setErrors(newErrors);
 
@@ -46,9 +82,9 @@ const PassengerDetailModal = ({
       type: passenger.type || 0,
       no: passenger.no || "",
       fullName: passenger.fullName || "",
-      gender: passenger.gender ?? 0,
+      gender: passenger.gender,
       dateOfBirth: passenger.dateOfBirth || "",
-      placeOfBirth: passenger.placeOfBirth || null,
+      placeOfBirth: passenger.placeOfBirth || "",
       issueDate: passenger.issueDate || "",
       expiryDate: passenger.expiryDate || "",
       nationalityID: passenger.nationalityID || "",
@@ -66,8 +102,8 @@ const PassengerDetailModal = ({
       className="relative z-50 text-black"
     >
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-      <div className="fixed inset-0 flex items-end justify-center">
-        <Dialog.Panel className="w-full max-w-md rounded-xl bg-white p-6 space-y-4 relative overflow-y-auto max-h-full">
+      <div className="fixed inset-0 flex w-screen items-end justify-center p-0">
+        <Dialog.Panel className="w-full max-w-md rounded-t-xl md:rounded-xl bg-white p-6 space-y-4 relative overflow-y-auto max-h-[100vh]">
           <button
             onClick={() => setIsOpen(false)}
             className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
@@ -82,35 +118,37 @@ const PassengerDetailModal = ({
 
           <p className="text-sm text-gray-500 mb-2">Isi detail penumpang</p>
 
-          {/* Gender */}
-          <div className="flex items-center gap-10">
-            <label className="flex items-center gap-1">
-              <input
-                type="radio"
-                name="gender"
-                value="L"
-                checked={passenger.gender === 0}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 rounded border ${
-                  errors.no ? "border-red-500 bg-red-50" : "border-gray-300"
-                }`}
-              />
-              Laki-laki
-            </label>
-            <label className="flex items-center gap-1">
-              <input
-                type="radio"
-                name="gender"
-                value="P"
-                checked={passenger.gender === 1}
-                onChange={handleChange}
-              />
-              Perempuan
-            </label>
-            {errors.no && <p className="text-xs text-red-600">{errors.no}</p>}
+          <div>
+            <label className="text-sm font-semibold">Jenis Kelamin</label>
+            <div className="flex items-center gap-10 mt-1">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="gender"
+                  value={0}
+                  checked={passenger.gender === 0}
+                  onChange={(e) => setPassenger((p) => ({ ...p, gender: 0 }))}
+                  className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:bg-blue-600 checked:border-blue-600 focus:outline-none"
+                />
+                Laki-laki
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="gender"
+                  value={1}
+                  checked={passenger.gender === 1}
+                  onChange={(e) => setPassenger((p) => ({ ...p, gender: 1 }))}
+                  className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:bg-blue-600 checked:border-blue-600 focus:outline-none"
+                />
+                Perempuan
+              </label>
+            </div>
+            {errors.gender && (
+              <p className="text-xs text-red-600 mt-1">{errors.gender}</p>
+            )}
           </div>
 
-          {/* Fields */}
           <div className="space-y-4">
             <div>
               <label className="text-sm font-semibold">Nama Lengkap</label>
@@ -120,12 +158,16 @@ const PassengerDetailModal = ({
                 placeholder="Masukkan nama lengkap"
                 value={passenger.fullName || ""}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 rounded border ${
-                  errors.no ? "border-red-500 bg-red-50" : "border-gray-300"
+                className={`w-full px-3 py-2 rounded border mt-1 ${
+                  errors.fullName
+                    ? "border-red-500 bg-red-50"
+                    : "border-gray-300"
                 }`}
               />
-              {errors.no && <p className="text-xs text-red-600">{errors.no}</p>}
-              <p className="text-xs text-gray-500">
+              {errors.fullName && (
+                <p className="text-xs text-red-600 mt-1">{errors.fullName}</p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
                 Sesuai paspor (tanpa tanda baca dan gelar)
               </p>
             </div>
@@ -138,11 +180,13 @@ const PassengerDetailModal = ({
                 placeholder="Masukkan nomor paspor"
                 value={passenger.no || ""}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 rounded border ${
+                className={`w-full px-3 py-2 rounded border mt-1 ${
                   errors.no ? "border-red-500 bg-red-50" : "border-gray-300"
                 }`}
               />
-              {errors.no && <p className="text-xs text-red-600">{errors.no}</p>}
+              {errors.no && (
+                <p className="text-xs text-red-600 mt-1">{errors.no}</p>
+              )}
             </div>
 
             <div>
@@ -152,11 +196,18 @@ const PassengerDetailModal = ({
                 name="dateOfBirth"
                 value={passenger.dateOfBirth || ""}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 rounded border ${
-                  errors.no ? "border-red-500 bg-red-50" : "border-gray-300"
+                max={today} // Cannot be born in the future
+                className={`appearance-none w-full px-3 py-2 rounded border mt-1 ${
+                  errors.dateOfBirth
+                    ? "border-red-500 bg-red-50"
+                    : "border-gray-300"
                 }`}
               />
-              {errors.no && <p className="text-xs text-red-600">{errors.no}</p>}
+              {errors.dateOfBirth && (
+                <p className="text-xs text-red-600 mt-1">
+                  {errors.dateOfBirth}
+                </p>
+              )}
             </div>
 
             <div>
@@ -166,11 +217,16 @@ const PassengerDetailModal = ({
                 name="issueDate"
                 value={passenger.issueDate || ""}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 rounded border ${
-                  errors.no ? "border-red-500 bg-red-50" : "border-gray-300"
+                max={today} // --- FIX: Cannot select a future date ---
+                className={`appearance-none w-full px-3 py-2 rounded border mt-1 ${
+                  errors.issueDate
+                    ? "border-red-500 bg-red-50"
+                    : "border-gray-300"
                 }`}
               />
-              {errors.no && <p className="text-xs text-red-600">{errors.no}</p>}
+              {errors.issueDate && (
+                <p className="text-xs text-red-600 mt-1">{errors.issueDate}</p>
+              )}
             </div>
 
             <div>
@@ -182,11 +238,17 @@ const PassengerDetailModal = ({
                 name="expiryDate"
                 value={passenger.expiryDate || ""}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 rounded border ${
-                  errors.no ? "border-red-500 bg-red-50" : "border-gray-300"
+                // --- FIX: Min date is the day after issue date, or tomorrow ---
+                min={passenger.issueDate ? new Date(new Date(passenger.issueDate).getTime() + 86400000).toISOString().split('T')[0] : today}
+                className={`appearance-none w-full px-3 py-2 rounded border mt-1 ${
+                  errors.expiryDate
+                    ? "border-red-500 bg-red-50"
+                    : "border-gray-300"
                 }`}
               />
-              {errors.no && <p className="text-xs text-red-600">{errors.no}</p>}
+              {errors.expiryDate && (
+                <p className="text-xs text-red-600 mt-1">{errors.expiryDate}</p>
+              )}
             </div>
 
             <div>
@@ -195,8 +257,10 @@ const PassengerDetailModal = ({
                 name="nationalityID"
                 value={passenger.nationalityID || ""}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 rounded border ${
-                  errors.no ? "border-red-500 bg-red-50" : "border-gray-300"
+                className={`appearance-none w-full px-3 py-2 rounded border mt-1 bg-white ${
+                  errors.nationalityID
+                    ? "border-red-500 bg-red-50"
+                    : "border-gray-300"
                 }`}
               >
                 <option value="">Pilih kewarganegaraan</option>
@@ -206,7 +270,11 @@ const PassengerDetailModal = ({
                   </option>
                 ))}
               </select>
-              {errors.no && <p className="text-xs text-red-600">{errors.no}</p>}
+              {errors.nationalityID && (
+                <p className="text-xs text-red-600 mt-1">
+                  {errors.nationalityID}
+                </p>
+              )}
             </div>
 
             <div>
@@ -217,8 +285,10 @@ const PassengerDetailModal = ({
                 name="issuanceCountryID"
                 value={passenger.issuanceCountryID || ""}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 rounded border ${
-                  errors.no ? "border-red-500 bg-red-50" : "border-gray-300"
+                className={`appearance-none w-full px-3 py-2 rounded border mt-1 bg-white ${
+                  errors.issuanceCountryID
+                    ? "border-red-500 bg-red-50"
+                    : "border-gray-300"
                 }`}
               >
                 <option value="">Pilih negara</option>
@@ -228,7 +298,11 @@ const PassengerDetailModal = ({
                   </option>
                 ))}
               </select>
-              {errors.no && <p className="text-xs text-red-600">{errors.no}</p>}
+              {errors.issuanceCountryID && (
+                <p className="text-xs text-red-600 mt-1">
+                  {errors.issuanceCountryID}
+                </p>
+              )}
             </div>
 
             <div>
@@ -238,18 +312,23 @@ const PassengerDetailModal = ({
                 name="placeOfBirth"
                 value={passenger.placeOfBirth || ""}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 rounded border ${
-                  errors.no ? "border-red-500 bg-red-50" : "border-gray-300"
+                className={`w-full px-3 py-2 rounded border mt-1 ${
+                  errors.placeOfBirth
+                    ? "border-red-500 bg-red-50"
+                    : "border-gray-300"
                 }`}
               />
-              {errors.no && <p className="text-xs text-red-600">{errors.no}</p>}
+              {errors.placeOfBirth && (
+                <p className="text-xs text-red-600 mt-1">
+                  {errors.placeOfBirth}
+                </p>
+              )}
             </div>
           </div>
 
-          {/* Submit Button */}
           <button
             onClick={handleSubmit}
-            className="w-full bg-blue-600 text-white py-3 rounded font-semibold mt-6"
+            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold mt-6 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             Simpan
           </button>
