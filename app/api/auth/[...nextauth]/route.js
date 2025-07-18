@@ -39,7 +39,7 @@ export const authOptions = {
               productType: productType,
               ca_code: ca_code,
               id: ca_code,
-              externalID:externalID,
+              externalID:externalId,
             };
             return user;
           } else {
@@ -53,6 +53,9 @@ export const authOptions = {
       },
     }),
   ],
+  pages:{
+    signIn: "/unauthorized",
+  },
   session: {
     strategy: "jwt",
   },
