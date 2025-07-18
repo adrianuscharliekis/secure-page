@@ -14,6 +14,7 @@ import {
   User,
   X,
   AlertCircle,
+  CheckCircle, // Import the success icon
 } from "lucide-react";
 import ImportantNotes from "@/components/sindoferry/ImportantNotes";
 import Confirmation from "@/public/assets/jagaan detail.png";
@@ -38,6 +39,7 @@ const FormDetail = ({
   const [loading, setLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [bookingError, setBookingError] = useState(null);
+  const [bookingSuccess, setBookingSuccess] = useState(false); // State for success message
 
   // Effect to ensure component is mounted before using portals
   useEffect(() => {
@@ -104,6 +106,7 @@ const FormDetail = ({
   const handleContinue = () => {
     if (validateForm()) {
       updateFormData({ contactDetails: contact });
+      setBookingSuccess(false); // Reset success state when opening modal
       setConfirmation(true);
     }
   };
@@ -130,11 +133,12 @@ const FormDetail = ({
   
   const submitBooking = async () => {
     setLoading(true);
-    setBookingError(null); // Reset previous errors
+    setBookingError(null);
     try {
       const data = await createBooking(formData, countries);
       
       if (data && data.success && data.data) {
+        setBookingSuccess(true); // Set success state to true
         const url = new URL(process.env.NEXT_PUBLIC_URL_DEEP_LINK);
         const param = {
           plu: data.data.plu === null ? "" : data.data.plu,
@@ -142,21 +146,24 @@ const FormDetail = ({
           trxid: data.data.trxToko,
         };
         url.search = new URLSearchParams(param).toString();
-        console.log("Redirecting to payment:", url.toString());
-        window.location.replace(url.toString());
+        
+        // Redirect after a short delay to allow user to see the success message
+        setTimeout(() => {
+          window.location.replace(url.toString());
+        }, 1500); // 1.5 second delay
+
       } else {
-        // Handle cases where booking is not successful but doesn't throw an error
         setBookingError(data?.message || "Booking failed. Please try again.");
-        setConfirmation(false); // Close the confirmation modal
+        setConfirmation(false);
+        setLoading(false);
       }
     } catch (error) {
       console.error("An actual error occurred during booking:", error);
-      // Set a user-friendly error message from the caught error
       setBookingError(error.response?.data?.message || error.message || "An unexpected error occurred.");
-      setConfirmation(false); // Close the confirmation modal
-    } finally {
+      setConfirmation(false);
       setLoading(false);
     }
+    // No finally block for setLoading(false) here, as we want to keep it loading during the redirect delay
   };
 
   if (!isMounted) {
@@ -418,15 +425,27 @@ const FormDetail = ({
                 onClick={() => !loading && setConfirmation(false)}
               />
               <div className="fixed w-full flex flex-col space-y-5 py-12 items-center justify-center inset-x-0 bottom-0 bg-white rounded-t-2xl border-t shadow-xl z-50">
-                <Image src={Confirmation} width={200} alt="confirm" />
-                <div className="text-center border-b py-5">
-                  <h1 className="font-semibold text-lg">
-                    Pastikan Data Anda Telah Sesuai
-                  </h1>
-                  <p className="text-md text-gray-500 px-10 sm:px-24">
-                    Data yang telah diisi tidak bisa diubah lagi
-                  </p>
-                </div>
+                {bookingSuccess ? (
+                  <div className="text-center border-b pb-5 w-full">
+                    <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+                    <h1 className="font-semibold text-lg">Booking Berhasil!</h1>
+                    <p className="text-md text-gray-500 px-10 sm:px-24">
+                      Anda akan dialihkan ke halaman pembayaran.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <Image src={Confirmation} width={200} alt="confirm" />
+                    <div className="text-center border-b py-5">
+                      <h1 className="font-semibold text-lg">
+                        Pastikan Data Anda Telah Sesuai
+                      </h1>
+                      <p className="text-md text-gray-500 px-10 sm:px-24">
+                        Data yang telah diisi tidak bisa diubah lagi
+                      </p>
+                    </div>
+                  </>
+                )}
                 <div className="flex w-full px-10 flex-col gap-5">
                   <button
                     className="w-full bg-sky-500 rounded-2xl text-white px-5 py-3 flex items-center justify-center disabled:bg-sky-400 disabled:cursor-not-allowed"
@@ -439,7 +458,7 @@ const FormDetail = ({
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        <span>Memproses...</span>
+                        <span>{bookingSuccess ? 'Mengalihkan...' : 'Memproses...'}</span>
                       </>
                     ) : (
                       "Pesan Sekarang"
