@@ -8,7 +8,7 @@ export const authOptions = {
       credentials: {
       },
       async authorize(credentials, req) {
-        const { ca_code, payload, timestamp, productType ,externalID} = credentials;
+        const { ca_code, payload, timestamp, productType ,externalId} = credentials;
 
         try {
           const response = await fetch(process.env.URL_GATEWAY + "/auth/login", {
@@ -18,7 +18,7 @@ export const authOptions = {
               'X-TIMESTAMP': timestamp,
               'X-CLIENT-KEY': ca_code,
               'X-SIGNATURE': payload,
-              'X-EXTERNAL-ID': externalID,
+              'X-EXTERNAL-ID': externalId,
               'X-PRODUCT-ID':productType
             },
             body: JSON.stringify({ grantType: "client_credentials" })

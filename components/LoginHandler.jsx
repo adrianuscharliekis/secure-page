@@ -11,7 +11,7 @@ export default function LoginHandler() {
   const payload = searchParams.get("signature");
   const timestamp = searchParams.get("timestamp");
   const productType = searchParams.get("product");
-  const externalID = searchParams.get("externalID");
+  const externalID = searchParams.get("externalId");
   const redirect = "/secure/" + productType;
   useEffect(() => {
     if (!ca_code || !payload) {
@@ -34,5 +34,5 @@ export default function LoginHandler() {
     login();
   }, [ca_code, payload, timestamp, redirect, productType,externalID]); // Added all dependencies
 
-  return <Loading isOpen={true} text="Logging you in, please wait..." />;
+  return <Loading isOpen={true} text="   Logging you in, please wait..." />;
 }
