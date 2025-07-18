@@ -11,6 +11,7 @@ export default function LoginHandler() {
   const payload = searchParams.get("signature");
   const timestamp = searchParams.get("timestamp");
   const productType = searchParams.get("product");
+  const externalID = searchParams.get("externalID");
   const redirect = "/secure/" + productType;
   useEffect(() => {
     if (!ca_code || !payload) {
@@ -24,6 +25,7 @@ export default function LoginHandler() {
         payload,
         timestamp,
         productType,
+        externalID,
         redirect: true,
         callbackUrl: redirect,
       });

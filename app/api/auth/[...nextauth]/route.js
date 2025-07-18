@@ -8,7 +8,7 @@ export const authOptions = {
       credentials: {
       },
       async authorize(credentials, req) {
-        const { ca_code, payload, timestamp, productType } = credentials;
+        const { ca_code, payload, timestamp, productType ,externalID} = credentials;
 
         try {
           const response = await fetch(process.env.URL_GATEWAY + "/auth/login", {
@@ -18,7 +18,8 @@ export const authOptions = {
               'X-TIMESTAMP': timestamp,
               'X-CLIENT-KEY': ca_code,
               'X-SIGNATURE': payload,
-              'X-EXTERNAL-ID': productType
+              'X-EXTERNAL-ID': externalID,
+              'X-PRODUCT-ID':productType
             },
             body: JSON.stringify({ grantType: "client_credentials" })
           });
@@ -35,9 +36,10 @@ export const authOptions = {
             const user = {
               accessToken: apiResponse.additionalInfo.accessToken,
               expiresIn: apiResponse.additionalInfo.expiresIn,
-              productType: credentials.productType,
-              ca_code: credentials.ca_code,
-              id: credentials.ca_code,
+              productType: productType,
+              ca_code: ca_code,
+              id: ca_code,
+              externalID:externalID,
             };
             return user;
           } else {
@@ -63,6 +65,7 @@ export const authOptions = {
         token.partnerKey = user.ca_code;
         token.externalKey = user.productType; // Changed to match middleware
         token.id = user.id;
+        token.externalID=user.externalID
 
         const nowInSeconds = Math.floor(Date.now() / 1000);
         const expiresInSeconds = parseInt(user.expiresIn, 10);
@@ -76,6 +79,7 @@ export const authOptions = {
       session.user.id = token.id;
       session.user.partnerKey = token.partnerKey;
       session.user.externalKey = token.externalKey; // Changed to match middleware
+      session.user.externalID=token.externalID;
       
       return session;
     },
