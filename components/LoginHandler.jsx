@@ -32,7 +32,7 @@ export default function LoginHandler() {
     };
 
     login();
-  }, [ca_code, payload, timestamp, redirect, productType]); // Added all dependencies
+  }, [ca_code, payload, timestamp, redirect, productType,externalID]); // Added all dependencies
 
   return <Loading isOpen={true} text="Logging you in, please wait..." />;
 }
