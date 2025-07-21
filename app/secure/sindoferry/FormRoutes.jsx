@@ -11,7 +11,13 @@ import { format } from "date-fns";
 import ModalSelectClass from "@/components/sindoferry/ClassModal";
 import FormRoutesSkeleton from "@/components/sindoferry/skeleton/FormRoutesSkeleton";
 
-const FormRoutes = ({ routes, formData, updateFormData, nextStep, isLoading }) => {
+const FormRoutes = ({
+  routes,
+  formData,
+  updateFormData,
+  nextStep,
+  isLoading,
+}) => {
   const [isRouteModalOpen, setIsRouteModalOpen] = useState(false);
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const [showTripCalendar, setShowTripCalendar] = useState(false);
@@ -153,7 +159,7 @@ const FormRoutes = ({ routes, formData, updateFormData, nextStep, isLoading }) =
     },
     [formData.passengers, addPassenger, removePassenger]
   );
-  
+
   function formatDateToYYYYMMDD(date) {
     if (!date) return null;
     const year = date.getFullYear();
@@ -180,30 +186,14 @@ const FormRoutes = ({ routes, formData, updateFormData, nextStep, isLoading }) =
   }
 
   return (
-    <div className="lg:flex lg:min-h-screen">
-      <div className="fixed w-full top-0 left-0 bg-white px-5 py-3 z-30 shadow-md lg:hidden">
-        <h1 className="text-xl text-center font-semibold">Sindoferry</h1>
+    <div className="flex flex-col lg:flex-row min-h-screen">
+      <div className="absolute lg:relative w-full h-64 lg:h-auto lg:w-1/2">
+        <Image src={Hero} alt="hero" fill className="object-cover" priority />
       </div>
-      
-      {/* Left side - Image (visible on desktop) */}
-      <div className="hidden lg:block lg:w-1/2 lg:relative">
-        <Image src={Hero} layout="fill" objectFit="cover" alt="hero" priority />
-        <div className="absolute inset-0 bg-black/20"></div>
-         <div className="absolute top-10 left-10">
-             <h1 className="text-4xl text-white font-bold">Sindoferry</h1>
-         </div>
-      </div>
-      
-      {/* Right side - Form */}
-      <div className="w-full lg:w-1/2 flex flex-col items-center justify-start lg:justify-center">
-        {/* Mobile-only Hero Image */}
-        <div className="lg:hidden">
-            <Image src={Hero} width={2000} className="z-10" alt="hero" priority />
-        </div>
-        
+      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center min-h-screen">
         {/* Form Card */}
-        <div className="relative w-full -mt-10 z-20 px-5 lg:mt-0 lg:px-0">
-          <div className="bg-white mx-auto lg:mx-0 lg:mr-auto lg:ml-[-5rem] w-full max-w-md rounded-2xl shadow-lg p-5 space-y-5">
+        <div className="relative w-full z-20 px-5 lg:mt-0 lg:px-0">
+          <div className="bg-white mx-auto   w-full max-w-md  rounded-2xl shadow-lg p-5 space-y-5">
             {/* Rute Perjalanan Switch */}
             <div className="flex justify-between items-center">
               <div>
@@ -309,7 +299,7 @@ const FormRoutes = ({ routes, formData, updateFormData, nextStep, isLoading }) =
                   </span>
                 </button>
                 {showTripCalendar && (
-                  <div className="absolute top-full mt-2 z-10 bg-white rounded-lg shadow-lg border">
+                  <div className="absolute top-full mt-2 z-10 bg-white rounded-lg shadow-lg border p-5">
                     <DayPicker
                       mode="single"
                       selected={formData.outbound.tripDate}
@@ -342,7 +332,7 @@ const FormRoutes = ({ routes, formData, updateFormData, nextStep, isLoading }) =
                     </span>
                   </button>
                   {showReturnCalendar && (
-                    <div className="absolute top-full mt-2 z-10 bg-white rounded-lg shadow-lg border">
+                    <div className="absolute top-full mt-2 z-10 bg-white rounded-lg shadow-lg border p-5">
                       <DayPicker
                         mode="single"
                         selected={formData.return.tripDate}

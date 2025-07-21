@@ -20,7 +20,7 @@ const TripCard = ({ trip, route, onSelect }) => {
   return (
     <button
       onClick={onSelect}
-      className="ticket-card rounded-2xl bg-gradient-to-br from-blue-700 to-blue-500 text-white shadow-lg overflow-hidden"
+      className="ticket-card w-full rounded-2xl bg-gradient-to-br from-blue-700 to-blue-500 text-white shadow-lg overflow-hidden"
     >
       <div className="grid grid-cols-3 justify-between px-4 pt-4">
         <div>
@@ -29,7 +29,7 @@ const TripCard = ({ trip, route, onSelect }) => {
           </p>
           <p className="text-sm text-white/80">{route.embarkationPort.name}</p>
         </div>
-        <div className="flex gap gap-3 px-4 pt-2 text-sm text-white/90">
+        <div className="flex gap gap-3 justify-center px-4 pt-2 text-sm text-white/90">
           <p> <Clock/> </p>
           <p>{duration}</p>
         </div>

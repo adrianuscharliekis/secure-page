@@ -200,8 +200,8 @@ const FormDetail = ({
 
       <div className="p-4 space-y-6 pt-4">
         {/* Outbound */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
+        <div className="space-y-3 w-full">
+          <div className="flex items-center justify-between w-full">
             <span className="text-sm rounded bg-sky-100 px-2 py-1 text-blue-600 font-medium">
               Keberangkatan
             </span>

@@ -99,11 +99,11 @@ const PassengerDetailModal = ({
     <Dialog
       open={isOpen}
       onClose={() => setIsOpen(false)}
-      className="relative z-50 text-black"
+      className="relative z-50 text-black "
     >
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
       <div className="fixed inset-0 flex w-screen items-end justify-center p-0">
-        <Dialog.Panel className="w-full max-w-md rounded-t-xl md:rounded-xl bg-white p-6 space-y-4 relative overflow-y-auto max-h-[100vh]">
+        <Dialog.Panel className="w-full  rounded-t-xl md:rounded-xl bg-white p-6 space-y-4 relative overflow-y-auto max-h-[100vh]">
           <button
             onClick={() => setIsOpen(false)}
             className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"

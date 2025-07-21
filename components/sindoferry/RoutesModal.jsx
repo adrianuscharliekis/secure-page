@@ -40,14 +40,14 @@ const ModalRoutesSelect = ({ routes, isOpen, setIsOpen, handleSelectedRoute }) =
     <Dialog
       open={isOpen}
       onClose={() => setIsOpen(false)}
-      className="relative z-50"
+      className="relative z-50 w-full"
     >
       {/* The backdrop, rendered as a fixed sibling to the panel container */}
-      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+      <div className="fixed inset-0 bg-black/30 w-full" aria-hidden="true" />
 
       {/* Full-screen container to center the panel */}
-      <div className="fixed inset-0 flex w-screen items-center justify-center text-black">
-        <Dialog.Panel className="w-full h-full max-w-lg bg-gray-50 flex flex-col">
+      <div className="fixed inset-0 flex  items-center justify-center text-black w-full">
+        <Dialog.Panel className=" h-full w-full bg-gray-50 flex flex-col">
           {/* Header */}
           <div className="flex items-center gap-4 p-4 bg-white shadow-sm">
             <button onClick={() => setIsOpen(false)}>
