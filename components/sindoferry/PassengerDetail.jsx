@@ -14,13 +14,38 @@ const PassengerDetailModal = ({
 
   // Get today's date in YYYY-MM-DD format for setting max/min on date inputs
   const today = new Date().toISOString().split("T")[0];
-
   useEffect(() => {
     if (isOpen) {
-      setPassenger(passengerData || {});
-      setErrors({});
+      if (!passengerData.issueDate) {
+        const today = new Date();
+
+        // 10 years ago
+        const tenYearsAgo = new Date(today);
+        tenYearsAgo.setFullYear(today.getFullYear() - 10);
+        const tenYearsAgoFormatted = tenYearsAgo.toISOString().split("T")[0];
+
+        // Yesterday
+        const yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
+        const yesterdayFormatted = yesterday.toISOString().split("T")[0];
+
+        // Tomorrow
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+        const tomorrowFormatted = tomorrow.toISOString().split("T")[0];
+
+        setPassenger((prev) => ({
+          ...prev,
+          issueDate: yesterdayFormatted,
+          dateOfBirth: tenYearsAgoFormatted,
+          expiryDate: tomorrowFormatted,
+        }));
+      } else {
+        setPassenger(passengerData || {});
+        setErrors({});
+      }
     }
-  }, [isOpen, passengerData]);
+  }, [isOpen, passengerData, today]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -55,22 +80,27 @@ const PassengerDetailModal = ({
 
     // --- FIX: Date Validation ---
     if (!passenger.issueDate) {
-        newErrors.issueDate = "Wajib diisi";
+      newErrors.issueDate = "Wajib diisi";
     } else if (passenger.issueDate > todayStr) {
-        newErrors.issueDate = "Tanggal terbit tidak boleh di masa depan";
+      newErrors.issueDate = "Tanggal terbit tidak boleh di masa depan";
     }
 
     if (!passenger.expiryDate) {
-        newErrors.expiryDate = "Wajib diisi";
+      newErrors.expiryDate = "Wajib diisi";
     } else if (passenger.expiryDate <= todayStr) {
-        newErrors.expiryDate = "Tanggal habis berlaku harus di masa depan";
-    } else if (passenger.issueDate && passenger.expiryDate <= passenger.issueDate) {
-        newErrors.expiryDate = "Tanggal habis berlaku harus setelah tanggal terbit";
+      newErrors.expiryDate = "Tanggal habis berlaku harus di masa depan";
+    } else if (
+      passenger.issueDate &&
+      passenger.expiryDate <= passenger.issueDate
+    ) {
+      newErrors.expiryDate =
+        "Tanggal habis berlaku harus setelah tanggal terbit";
     }
 
     if (!passenger.dateOfBirth) newErrors.dateOfBirth = "Wajib diisi";
     if (!passenger.nationalityID) newErrors.nationalityID = "Wajib diisi";
-    if (!passenger.issuanceCountryID) newErrors.issuanceCountryID = "Wajib diisi";
+    if (!passenger.issuanceCountryID)
+      newErrors.issuanceCountryID = "Wajib diisi";
     if (!passenger.placeOfBirth) newErrors.placeOfBirth = "Wajib diisi";
     if (passenger.gender === undefined) newErrors.gender = "Wajib diisi";
 
@@ -106,7 +136,7 @@ const PassengerDetailModal = ({
         <Dialog.Panel className="w-full  rounded-t-xl md:rounded-xl bg-white p-6 space-y-4 relative overflow-y-auto max-h-[100vh]">
           <button
             onClick={() => setIsOpen(false)}
-            className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+            className="absolute top-10 right-6 text-gray-500 hover:text-gray-700"
           >
             <X />
           </button>
@@ -239,7 +269,15 @@ const PassengerDetailModal = ({
                 value={passenger.expiryDate || ""}
                 onChange={handleChange}
                 // --- FIX: Min date is the day after issue date, or tomorrow ---
-                min={passenger.issueDate ? new Date(new Date(passenger.issueDate).getTime() + 86400000).toISOString().split('T')[0] : today}
+                min={
+                  passenger.issueDate
+                    ? new Date(
+                        new Date(passenger.issueDate).getTime() + 86400000
+                      )
+                        .toISOString()
+                        .split("T")[0]
+                    : today
+                }
                 className={`appearance-none w-full px-3 py-2 rounded border mt-1 ${
                   errors.expiryDate
                     ? "border-red-500 bg-red-50"

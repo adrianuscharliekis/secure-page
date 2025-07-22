@@ -19,7 +19,6 @@ import {
 import ImportantNotes from "@/components/sindoferry/ImportantNotes";
 import Confirmation from "@/public/assets/jagaan detail.png";
 import Image from "next/image";
-import LoadingSpinner from "@/components/sindoferry/LoadingSpinner";
 import { createBooking } from "@/lib/sindoferry";
 
 const FormDetail = ({
@@ -41,24 +40,25 @@ const FormDetail = ({
   const [bookingError, setBookingError] = useState(null);
   const [bookingSuccess, setBookingSuccess] = useState(false); // State for success message
 
-  // Effect to ensure component is mounted before using portals
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+useEffect(() => {
+  // Set flag to indicate component is mounted
+  setIsMounted(true);
+}, []);
 
-  // Effect to lock body scroll when confirmation modal is open
-  useEffect(() => {
-    if (confirmation) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
+useEffect(() => {
+  // Lock body scroll when modal is open
+  if (confirmation) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = 'unset';
+  }
 
-    // Cleanup function to reset the overflow when the component unmounts
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [confirmation]);
+  // Cleanup on unmount
+  return () => {
+    document.body.style.overflow = 'unset';
+  };
+}, [confirmation]);
+
 
   const handlePassengerSubmit = useCallback(
     (index, updatedPassenger) => {
@@ -166,9 +166,6 @@ const FormDetail = ({
     // No finally block for setLoading(false) here, as we want to keep it loading during the redirect delay
   };
 
-  if (!isMounted) {
-    return <LoadingSpinner isOpen={true} />;
-  }
 
   return (
     <div className="bg-gray-50 min-h-screen">
