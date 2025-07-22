@@ -1,7 +1,10 @@
 // app/unauthorized/page.tsx or wherever you route unauthorized access
 import React from "react";
 import { Lock } from "lucide-react";
-
+export const metadata = {
+  title: "Unauthorized",
+  description: "Secure page from KIS for booking ticket",
+};
 const UnauthorizedPage = () => {
   return (
     <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50 px-6 text-center">

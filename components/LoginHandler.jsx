@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams,useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Loading from "@/components/Loading";
 
 export default function LoginHandler() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const ca_code = searchParams.get("ca_code");
   const payload = searchParams.get("signature");
   const timestamp = searchParams.get("timestamp");
@@ -14,8 +15,9 @@ export default function LoginHandler() {
   const externalId = searchParams.get("externalId");
   const redirect = "/secure/" + productType;
   useEffect(() => {
-    if (!ca_code || !payload) {
+    if (!ca_code || !payload||!timestamp||!productType||!externalId) {
       console.error("Login parameters are missing.");
+      router.push("/unauthorized")
       return;
     }
 
@@ -32,7 +34,7 @@ export default function LoginHandler() {
     };
 
     login();
-  }, [ca_code, payload, timestamp, redirect, productType,externalId]); // Added all dependencies
+  }, [ca_code, payload, timestamp, redirect, productType,externalId,router]); // Added all dependencies
 
   return <Loading isOpen={true} text="   Logging you in, please wait..." />;
 }

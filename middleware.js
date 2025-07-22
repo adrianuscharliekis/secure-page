@@ -4,15 +4,23 @@ import { NextResponse } from "next/server";
 
 export default withAuth(
   function middleware(req) {
-    // This function will only run on routes that match the matcher.
-    // You can add logic here if you need to perform actions on protected routes.
-    // For now, just letting it pass is fine.
+    // Check if the current path is the root path.
+    if (req.nextUrl.pathname === "/") {
+      // If it is, create the full URL for the /unauthorized page and redirect.
+      const url = req.nextUrl.clone();
+      url.pathname = "/unauthorized";
+      return NextResponse.redirect(url);
+    }
+
+    // For any other protected route, allow the request to proceed.
+    // This part only runs if the user is authenticated.
     return NextResponse.next();
   },
   {
     callbacks: {
       authorized: ({ token }) => {
-        // This logic is now only for protected pages.
+        // This logic checks if the user is authorized for ANY page
+        // matched by the config below.
         if (!token) {
           return false;
         }
@@ -23,29 +31,20 @@ export default withAuth(
           return false;
         }
 
-        // You can keep the more detailed checks if you want, but the
-        // presence of the token is often enough here.
         return !!token.accessToken;
       },
     },
     pages: {
-      // Redirect unauthorized users (on protected pages) to this route.
+      // If the `authorized` callback returns false, redirect to this page.
       signIn: "/unauthorized",
     },
     secret: process.env.NEXTAUTH_SECRET,
   }
 );
 
-// This is the crucial part!
+// This config remains the same. It ensures the middleware runs on the root path "/"
+// and all other paths except the excluded ones.
 export const config = {
-  // The matcher defines which routes the middleware will run on.
-  // This regex matches all paths EXCEPT for the ones specified.
-  // We are excluding:
-  // - /api routes
-  // - /_next/static and /_next/image (Next.js internals)
-  // - favicon.ico
-  // - /auth/login (your login page)
-  // - /unauthorized (your sign-in page)
   matcher: [
     "/((?!api|_next/static|_next/image|favicon.ico|auth/login|unauthorized).*)",
   ],
