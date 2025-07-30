@@ -23,9 +23,9 @@ const TripCard = ({ trip, route, onSelect }) => {
       className="ticket-card w-full rounded-2xl bg-gradient-to-br from-blue-700 to-blue-500 text-white shadow-lg overflow-hidden"
     >
       <div className="grid grid-cols-3 justify-between px-4 pt-4">
-        <div>
+        <div className="text-left">
           <p className="text-md font-bold">
-            {route.embarkationPort.code} {trip.departureTime} SGT
+            {route.embarkationPort.code} {trip.departureTime} WIB
           </p>
           <p className="text-sm text-white/80">{route.embarkationPort.name}</p>
         </div>
@@ -47,13 +47,13 @@ const TripCard = ({ trip, route, onSelect }) => {
         Open Gate: {trip.gateOpen} | Close Gate: {trip.gateClose}
       </p>
 
-      <div className="grid grid-cols-2 mt-2 gap-2 bg-white text-black p-3 text-sm font-medium">
-        <div className="flex flex-col justify-start items-start">
+      <div className="grid grid-cols-2 mt-2 gap-2 bg-white text-black px-3 py-1  text-sm font-medium">
+        <div className="flex flex-col justify-center items-start gap-1">
           <p className="capitalize text-md">Harga Lokal</p>
-          <p className="font-semibold text-lg">{formatRupiah(trip.price)}</p>
-        </div>
-        <div className="flex flex-col justify-end items-end">
           <p className="capitalize text-md">Harga Turis</p>
+        </div>
+        <div className="flex flex-col justify-end items-end gap-1">
+          <p className="font-semibold text-lg">{formatRupiah(trip.price)}</p>
           <p className="font-semibold text-lg">
             {formatRupiah(trip.touristPrice)}
           </p>

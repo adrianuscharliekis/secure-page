@@ -179,7 +179,6 @@ const FormDetail = ({
     []
   );
 
-  const ticketLabel = formData.passengers.length > 1 ? "Dewasa" : "Penumpang";
 
   const submitBooking = async () => {
     setLoading(true);
@@ -224,7 +223,7 @@ const FormDetail = ({
       {/* Header */}
       <div className="flex sticky top-0 bg-white w-full items-center p-4 border-b gap-2 text-black z-30">
         <button onClick={prevStep}>
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-7 h-7" />
         </button>
         <div className="flex flex-col">
           <h1 className="font-semibold">Detail Perjalanan</h1>
@@ -424,25 +423,17 @@ const FormDetail = ({
               <h2 className="text-lg font-semibold mb-4">Ringkasan Harga</h2>
 
               <div className="space-y-2 text-sm text-gray-700">
-                <div className="flex justify-between">
-                  <span>
-                    Tiket {formData.isRoundTrip ? "Pulang Pergi" : "Pergi"} x{" "}
-                    {formData.passengers.length} ({ticketLabel})
-                  </span>
-                  <span className="font-semibold">
-                    Rp{totalPayment.toLocaleString("id-ID")}
-                  </span>
-                </div>
+                
                 <div className="flex justify-between">
                   <span>Total Ticket</span>
                   <span className="font-semibold">
-                    {totalTicketPrice.toLocaleString("id-ID")}
+                    Rp. {totalTicketPrice.toLocaleString("id-ID")}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Total Fee</span>
                   <span className="font-semibold">
-                    {totalFee.toLocaleString("id-ID")}
+                    Rp. {totalFee.toLocaleString("id-ID")}
                   </span>
                 </div>
               </div>
