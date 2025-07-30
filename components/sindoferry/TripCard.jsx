@@ -30,7 +30,10 @@ const TripCard = ({ trip, route, onSelect }) => {
           <p className="text-sm text-white/80">{route.embarkationPort.name}</p>
         </div>
         <div className="flex gap gap-3 justify-center px-4 pt-2 text-sm text-white/90">
-          <p> <Clock/> </p>
+          <p>
+            {" "}
+            <Clock />{" "}
+          </p>
           <p>{duration}</p>
         </div>
         <div className="text-right">
@@ -44,9 +47,17 @@ const TripCard = ({ trip, route, onSelect }) => {
         Open Gate: {trip.gateOpen} | Close Gate: {trip.gateClose}
       </p>
 
-      <div className="bg-white text-black mt-3 px-4 py-2 flex justify-between items-center text-sm font-medium">
-        <p className="capitalize text-md">Ekonomi</p>
-        <p className="font-semibold text-lg">{formatRupiah(trip.price)}</p>
+      <div className="grid grid-cols-2 mt-2 gap-2 bg-white text-black p-3 text-sm font-medium">
+        <div className="flex flex-col justify-start items-start">
+          <p className="capitalize text-md">Harga Lokal</p>
+          <p className="font-semibold text-lg">{formatRupiah(trip.price)}</p>
+        </div>
+        <div className="flex flex-col justify-end items-end">
+          <p className="capitalize text-md">Harga Turis</p>
+          <p className="font-semibold text-lg">
+            {formatRupiah(trip.touristPrice)}
+          </p>
+        </div>
       </div>
     </button>
   );

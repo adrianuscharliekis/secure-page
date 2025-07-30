@@ -17,12 +17,14 @@ const FormRoutes = ({
   updateFormData,
   nextStep,
   isLoading,
+  isError,
 }) => {
   const [isRouteModalOpen, setIsRouteModalOpen] = useState(false);
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const [showTripCalendar, setShowTripCalendar] = useState(false);
   const [showReturnCalendar, setShowReturnCalendar] = useState(false);
   const [isClassModalOpen, setIsClassModalOpen] = useState(false);
+  const [sectorRoutes, setSectorRoutes] = useState([]);
   const maxPassenger = 9;
 
   // Effect to initialize the form with default routes when it loads.
@@ -65,43 +67,73 @@ const FormRoutes = ({
 
   const handleRoundTrip = useCallback(() => {
     const newIsRoundTrip = !formData.isRoundTrip;
+    let newReturnData = {
+      route: null,
+      trip: null,
+      tripDate: new Date(),
+      tripDateFormatted: null,
+    };
+    let availableReturnRoutes = [];
+
+    if (newIsRoundTrip && formData.outbound.route) {
+      const nextSectorId = formData.outbound.route.sector?.nextSector?.id;
+      if (nextSectorId) {
+        const matchingReturnRoutes = routes.filter(
+          (r) => r.sector.id === nextSectorId
+        );
+        availableReturnRoutes = matchingReturnRoutes;
+        newReturnData.route = matchingReturnRoutes[0] || routes[1] || routes[0];
+      } else {
+        const fallbackRoute = routes[1] || routes[0];
+        availableReturnRoutes = [fallbackRoute];
+        newReturnData.route = fallbackRoute;
+      }
+    }
 
     updateFormData({
       isRoundTrip: newIsRoundTrip,
-      return: newIsRoundTrip
-        ? {
-            route: routes[1] || routes[0], // pick second if exists, otherwise fallback
-            tripDate: new Date(),
-          }
-        : {
-            route: null,
-            trip: null,
-            tripDate: new Date(),
-            tripDateFormatted: null,
-          },
+      return: newReturnData,
+      availableReturnRoutes: availableReturnRoutes, // <-- UPDATE PARENT STATE
     });
-  }, [formData.isRoundTrip, updateFormData, routes]);
+  }, [formData.isRoundTrip, formData.outbound.route, updateFormData, routes]);
 
   const handleSelectedRoute = useCallback(
     (route) => {
-      updateFormData({ outbound: { route } });
+      let returnRouteUpdate = {};
+      let availableReturnRoutes = [];
+
+      if (formData.isRoundTrip) {
+        const nextSectorId = route.sector?.nextSector?.id;
+        if (nextSectorId) {
+          const matchingReturnRoutes = routes.filter(
+            (r) => r.sector.id === nextSectorId
+          );
+          availableReturnRoutes = matchingReturnRoutes;
+          // Also update the selected return route
+          returnRouteUpdate = {
+            route: matchingReturnRoutes[0] || routes[1] || routes[0],
+          };
+        } else {
+          const fallbackRoute = routes[1] || routes[0];
+          availableReturnRoutes = [fallbackRoute];
+          returnRouteUpdate = { route: fallbackRoute };
+        }
+      }
+
+      updateFormData({
+        outbound: { route },
+        return: returnRouteUpdate,
+        availableReturnRoutes: availableReturnRoutes, // <-- UPDATE PARENT STATE
+      });
       setIsRouteModalOpen(false);
     },
-    [updateFormData]
+    [formData.isRoundTrip, routes, updateFormData]
   );
 
   const handleSelectedReturnRoute = useCallback(
     (route) => {
       updateFormData({ return: { route } });
       setIsReturnModalOpen(false);
-    },
-    [updateFormData]
-  );
-
-  const handleSelectedClass = useCallback(
-    (tripClass) => {
-      updateFormData({ tripClass });
-      setIsClassModalOpen(false);
     },
     [updateFormData]
   );
@@ -183,6 +215,24 @@ const FormRoutes = ({
 
   if (isLoading) {
     return <FormRoutesSkeleton />;
+  }
+  if (isError || routes.length === 0) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center">
+          <h2 className="text-lg font-semibold mb-2 text-red-600">
+            Gagal Mendapatkan Rute
+          </h2>
+          <p className="text-gray-700 mb-4">Gagal memuat rute perjalanan.</p>
+          <button
+            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            onClick={() => window.location.reload()}
+          >
+            Reload Halaman
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -266,7 +316,7 @@ const FormRoutes = ({
                   </p>
                 </div>
                 <div className="flex justify-center items-center">
-                  <ArrowLeft className="w-6 h-6 text-gray-500 border border-gray-400 rounded-full p-1" />
+                  <ArrowLeft className="w-6 h-6 text-blue-500 border border-sky-500 rounded-full p-1" />
                 </div>
                 <div className="text-center">
                   <p className="text-sm text-sky-500 bg-sky-100">Ke</p>
@@ -396,23 +446,20 @@ const FormRoutes = ({
                 </div>
               </div>
             </div>
-
-            {/* Kelas Selection */}
-            <div
-              className="flex justify-between items-center border-t pt-4"
-              onClick={() => setIsClassModalOpen(true)}
-            >
-              <div>
-                <p className="text-gray-500 text-sm">Pilih Kelas</p>
-                <p className="font-medium capitalize">{formData.tripClass}</p>
-              </div>
-              <ChevronRight className="text-gray-400" />
-            </div>
-
-            {/* Search Button */}
+            {/* Show error message if routes are empty */}
+            {routes.length === 0 && (
+              <p className="text-sm text-red-500 text-center">
+                Gagal mendapatkan rute perjalanan
+              </p>
+            )}
             <button
-              className="w-full mt-4 py-3 rounded-full bg-blue-600 text-white font-semibold shadow-md hover:bg-blue-700 transition-colors"
+              className={`w-full mt-4 py-3 rounded-full font-semibold shadow-md transition-colors ${
+                routes.length === 0
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700 text-white"
+              }`}
               onClick={handleSubmit}
+              disabled={routes.length === 0}
             >
               Cari Tiket
             </button>
@@ -426,15 +473,10 @@ const FormRoutes = ({
         handleSelectedRoute={handleSelectedRoute}
       />
       <ModalRoutesSelect
-        routes={routes}
+        routes={formData.availableReturnRoutes}
         isOpen={isReturnModalOpen}
         setIsOpen={setIsReturnModalOpen}
         handleSelectedRoute={handleSelectedReturnRoute}
-      />
-      <ModalSelectClass
-        isOpen={isClassModalOpen}
-        setIsOpen={setIsClassModalOpen}
-        handleSelectedClass={handleSelectedClass}
       />
     </div>
   );

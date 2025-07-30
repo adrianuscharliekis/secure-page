@@ -46,9 +46,9 @@ const FormTrips = ({
   return (
     <div className="min-h-screen bg-white pb-10">
       {/* Header */}
-      <div className="flex sticky items-center px-4 py-2 border-b gap-2 text-gray-700">
+      <div className="flex sticky items-center px-4 py-2 border-b gap-5 text-gray-700">
         <button onClick={prevStep}>
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-7 h-7" />
         </button>
         <div className="flex flex-col">
           <div className="font-semibold flex items-center gap-1">
@@ -63,15 +63,6 @@ const FormTrips = ({
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="px-4 mt-3 flex gap-2">
-        <span className="bg-blue-100 text-blue-600 text-sm px-3 py-1 rounded-full font-medium">
-          Ekonomi
-        </span>
-        <span className="bg-gray-100 text-gray-600 text-sm px-3 py-1 rounded-full font-medium">
-          Semua Kelas
-        </span>
-      </div>
     {/* Trip List */}
       <div className="mt-4 px-4 flex flex-col gap-4">
         {trips===null?(

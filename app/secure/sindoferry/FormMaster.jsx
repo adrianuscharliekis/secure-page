@@ -29,6 +29,7 @@ const FormMaster = () => {
     },
     passengers: [],
     tripClass: "ekonomi",
+    availableReturnRoutes: [],
   });
 
   const {
@@ -79,7 +80,6 @@ const FormMaster = () => {
   const prevStep = useCallback(() => setStep((prev) => prev - 1), []);
   const resetStep = useCallback(() => setStep(1), []);
 
-
   if (isErrorCountries || isErrorRoutes) {
     return <div>Error: Failed to load route data. Please try again later.</div>;
   }
@@ -93,6 +93,7 @@ const FormMaster = () => {
           updateFormData={updateFormData}
           nextStep={nextStep}
           isLoading={isLoadingRoutes}
+          isError={isErrorRoutes}
         />
       )}
 

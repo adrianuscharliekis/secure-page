@@ -39,26 +39,28 @@ const FormDetail = ({
   const [isMounted, setIsMounted] = useState(false);
   const [bookingError, setBookingError] = useState(null);
   const [bookingSuccess, setBookingSuccess] = useState(false); // State for success message
+  const [passengersFilled, setPassengersFilled] = useState(false);
+  useEffect(() => {
+    const allHaveNationality = formData.passengers.every(
+      (p) => !!p.nationalityID
+    );
+    setPassengersFilled(allHaveNationality);
+    setIsMounted(true);
+  }, [formData.passengers]);
 
-useEffect(() => {
-  // Set flag to indicate component is mounted
-  setIsMounted(true);
-}, []);
+  useEffect(() => {
+    // Lock body scroll when modal is open
+    if (confirmation) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
 
-useEffect(() => {
-  // Lock body scroll when modal is open
-  if (confirmation) {
-    document.body.style.overflow = 'hidden';
-  } else {
-    document.body.style.overflow = 'unset';
-  }
-
-  // Cleanup on unmount
-  return () => {
-    document.body.style.overflow = 'unset';
-  };
-}, [confirmation]);
-
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [confirmation]);
 
   const handlePassengerSubmit = useCallback(
     (index, updatedPassenger) => {
@@ -71,8 +73,8 @@ useEffect(() => {
 
   const handleContactChange = (e) => {
     const { name, value } = e.target;
-    if (name === 'fullName') {
-      const filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
+    if (name === "fullName") {
+      const filteredValue = value.replace(/[^a-zA-Z\s]/g, "");
       setContact((prev) => ({ ...prev, [name]: filteredValue }));
     } else {
       setContact((prev) => ({ ...prev, [name]: value }));
@@ -111,12 +113,60 @@ useEffect(() => {
     }
   };
 
-  const totalPrice = useMemo(
-    () => 200000 * formData.passengers.length * (formData.isRoundTrip ? 2 : 1),
-    [formData.passengers.length, formData.isRoundTrip]
-  );
+  const totalTicketPrice = useMemo(() => {
+    const trip = formData.outbound.trip;
+    if (!trip) return 0;
 
-  const totalWithFees = useMemo(() => totalPrice + 20000 + 50000, [totalPrice]);
+    let total = 0;
+
+    formData.passengers.forEach((p) => {
+      const isLocal =
+        !passengersFilled ||
+        p.nationalityID === "0dbe8cd6-cb51-4e34-ff90-08d7934c8bf2";
+      // before filled: treat as local; otherwise detect based on ID
+      const priceField = isLocal ? trip.price : trip.touristPrice;
+      total += parseInt(priceField);
+      if (formData.isRoundTrip && formData.return.trip) {
+        const ret = formData.return.trip;
+        const returnPriceField = isLocal ? ret.price : ret.touristPrice;
+        total += parseInt(returnPriceField);
+      }
+    });
+
+    return total;
+  }, [
+    passengersFilled,
+    formData.passengers,
+    formData.outbound.trip,
+    formData.return?.trip,
+    formData.isRoundTrip,
+  ]);
+
+  const totalFee = useMemo(() => {
+    const trip = formData.outbound.trip;
+    if (!trip) return 0;
+
+    let feeTotal = 0;
+
+    formData.passengers.forEach(() => {
+      feeTotal += parseFloat(trip.fee);
+      if (formData.isRoundTrip && formData.return.trip) {
+        feeTotal += parseFloat(formData.return.trip.fee);
+      }
+    });
+
+    return feeTotal;
+  }, [
+    formData.passengers,
+    formData.outbound.trip,
+    formData.return?.trip,
+    formData.isRoundTrip,
+  ]);
+
+  const totalPayment = useMemo(
+    () => totalTicketPrice + totalFee,
+    [totalTicketPrice, totalFee]
+  );
 
   const formatDate = useCallback(
     (date) =>
@@ -130,13 +180,13 @@ useEffect(() => {
   );
 
   const ticketLabel = formData.passengers.length > 1 ? "Dewasa" : "Penumpang";
-  
+
   const submitBooking = async () => {
     setLoading(true);
     setBookingError(null);
     try {
       const data = await createBooking(formData, countries);
-      
+
       if (data && data.success && data.data) {
         setBookingSuccess(true); // Set success state to true
         const url = new URL(process.env.NEXT_PUBLIC_URL_DEEP_LINK);
@@ -146,26 +196,28 @@ useEffect(() => {
           trxid: data.data.trxToko,
         };
         url.search = new URLSearchParams(param).toString();
-        
+
         // Redirect after a short delay to allow user to see the success message
         setTimeout(() => {
           window.location.replace(url.toString());
         }, 1500); // 1.5 second delay
-
       } else {
         setBookingError(data?.message || "Booking failed. Please try again.");
-        setConfirmation(false);
+        // setConfirmation(false);
         setLoading(false);
       }
     } catch (error) {
       console.error("An actual error occurred during booking:", error);
-      setBookingError(error.response?.data?.message || error.message || "An unexpected error occurred.");
-      setConfirmation(false);
+      setBookingError(
+        error.response?.data?.message ||
+          error.message ||
+          "An unexpected error occurred."
+      );
+      // setConfirmation(false);
       setLoading(false);
     }
     // No finally block for setLoading(false) here, as we want to keep it loading during the redirect delay
   };
-
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -178,18 +230,26 @@ useEffect(() => {
           <h1 className="font-semibold">Detail Perjalanan</h1>
         </div>
       </div>
-      
+
       {/* Booking Error Notification */}
       {bookingError && (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 m-4 rounded-md relative" role="alert">
+        <div
+          className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 m-4 rounded-md relative"
+          role="alert"
+        >
           <div className="flex">
-            <div className="py-1"><AlertCircle className="h-6 w-6 text-red-500 mr-4"/></div>
+            <div className="py-1">
+              <AlertCircle className="h-6 w-6 text-red-500 mr-4" />
+            </div>
             <div>
               <p className="font-bold">Booking Gagal</p>
               <p className="text-sm">{bookingError}</p>
             </div>
-            <button onClick={() => setBookingError(null)} className="absolute top-0 bottom-0 right-0 px-4 py-3">
-              <X className="h-6 w-6"/>
+            <button
+              onClick={() => setBookingError(null)}
+              className="absolute top-0 bottom-0 right-0 px-4 py-3"
+            >
+              <X className="h-6 w-6" />
             </button>
           </div>
         </div>
@@ -338,7 +398,7 @@ useEffect(() => {
             </div>
           </div>
           {/* Special Needs */}
-          <div className="flex pt-4 items-center space-x-2 border-t">
+          {/* <div className="flex pt-4 items-center space-x-2 border-t">
             <input
               type="checkbox"
               id="specialNeeds"
@@ -348,7 +408,7 @@ useEffect(() => {
             <label htmlFor="specialNeeds" className="text-sm text-gray-700">
               Apakah Anda memiliki kebutuhan khusus?
             </label>
-          </div>
+          </div> */}
         </div>
 
         {/* Important Notes */}
@@ -360,7 +420,7 @@ useEffect(() => {
         <div className="fixed inset-x-0 bottom-0 bg-white rounded-t-2xl border-t shadow-xl px-5 pt-3 pb-6 z-40">
           {isCollapse && (
             <div className="transition-all duration-500 ease-in-out">
-              <div className="mx-auto mb-4 w-12 h-1.5 rounded-full bg-gray-300" />
+              {/* <div className="mx-auto mb-4 w-12 h-1.5 rounded-full bg-gray-300" /> */}
               <h2 className="text-lg font-semibold mb-4">Ringkasan Harga</h2>
 
               <div className="space-y-2 text-sm text-gray-700">
@@ -370,16 +430,20 @@ useEffect(() => {
                     {formData.passengers.length} ({ticketLabel})
                   </span>
                   <span className="font-semibold">
-                    Rp{totalPrice.toLocaleString("id-ID")}
+                    Rp{totalPayment.toLocaleString("id-ID")}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Biaya Layanan</span>
-                  <span className="font-semibold">Rp20.000</span>
+                  <span>Total Ticket</span>
+                  <span className="font-semibold">
+                    {totalTicketPrice.toLocaleString("id-ID")}
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Biaya Terminal</span>
-                  <span className="font-semibold">Rp50.000</span>
+                  <span>Total Fee</span>
+                  <span className="font-semibold">
+                    {totalFee.toLocaleString("id-ID")}
+                  </span>
                 </div>
               </div>
 
@@ -392,7 +456,7 @@ useEffect(() => {
               <div>
                 <h3 className="text-sm text-gray-500">Total Harga</h3>
                 <p className="text-xl font-bold text-gray-900">
-                  Rp {totalWithFees.toLocaleString("id-ID")}
+                  Rp {totalPayment.toLocaleString("id-ID")}
                 </p>
               </div>
               <button onClick={() => setIsCollapse((prev) => !prev)}>
@@ -422,7 +486,16 @@ useEffect(() => {
                 onClick={() => !loading && setConfirmation(false)}
               />
               <div className="fixed w-full flex flex-col space-y-5 py-12 items-center justify-center inset-x-0 bottom-0 bg-white rounded-t-2xl border-t shadow-xl z-50">
-                {bookingSuccess ? (
+                {/* Main Message Area (Success, Error, or Initial) */}
+                {bookingError ? (
+                  <div className="text-center border-b pb-5 w-full">
+                    <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+                    <h1 className="font-semibold text-lg">Booking Gagal</h1>
+                    <p className="text-md text-gray-500 px-10 sm:px-24">
+                      {bookingError}
+                    </p>
+                  </div>
+                ) : bookingSuccess ? (
                   <div className="text-center border-b pb-5 w-full">
                     <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
                     <h1 className="font-semibold text-lg">Booking Berhasil!</h1>
@@ -443,32 +516,94 @@ useEffect(() => {
                     </div>
                   </>
                 )}
+
                 <div className="flex w-full px-10 flex-col gap-5">
-                  <button
-                    className="w-full bg-sky-500 rounded-2xl text-white px-5 py-3 flex items-center justify-center disabled:bg-sky-400 disabled:cursor-not-allowed"
-                    onClick={submitBooking}
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <span>{bookingSuccess ? 'Mengalihkan...' : 'Memproses...'}</span>
-                      </>
-                    ) : (
-                      "Pesan Sekarang"
-                    )}
-                  </button>
-                  <button
-                    className="w-full text-blue-600 rounded-2xl px-5 py-3 border border-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                    onClick={() => setConfirmation(false)}
-                    disabled={loading}
-                  >
-                    Kembali
-                  </button>
+                  {bookingError ? (
+                    // State 1: Error -> Show only a "Back" button
+                    <button
+                      className="w-full text-blue-600 rounded-2xl px-5 py-3 border border-blue-600"
+                      onClick={() => {
+                        setConfirmation(false);
+                        setBookingError(null); // Reset the error on close
+                      }}
+                    >
+                      Kembali
+                    </button>
+                  ) : bookingSuccess ? (
+                    // State 2: Success -> Show a disabled "Redirecting..." button
+                    <button
+                      className="w-full bg-sky-500 rounded-2xl text-white px-5 py-3 flex items-center justify-center disabled:bg-sky-400 disabled:cursor-not-allowed"
+                      disabled
+                    >
+                      <svg
+                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      <span>Mengalihkan...</span>
+                    </button>
+                  ) : (
+                    // State 3: Initial -> Show "Book Now" and "Back" buttons
+                    <>
+                      <button
+                        className="w-full bg-sky-500 rounded-2xl text-white px-5 py-3 flex items-center justify-center disabled:bg-sky-400 disabled:cursor-not-allowed"
+                        onClick={submitBooking}
+                        disabled={loading}
+                      >
+                        {loading ? (
+                          <>
+                            <svg
+                              className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              ></path>
+                            </svg>
+                            <span>Memproses...</span>
+                          </>
+                        ) : (
+                          "Pesan Sekarang"
+                        )}
+                      </button>
+                      <button
+                        className="w-full text-blue-600 rounded-2xl px-5 py-3 border border-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => setConfirmation(false)}
+                        disabled={loading}
+                      >
+                        Kembali
+                      </button>
+                    </>
+                  )}
                 </div>
+                {/* END: CORRECTED BUTTONS BLOCK */}
               </div>
             </>,
             document.body
