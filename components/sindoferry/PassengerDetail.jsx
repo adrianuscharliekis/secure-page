@@ -1,6 +1,6 @@
-import { Dialog } from "@headlessui/react";
-import { X } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Dialog, Transition } from "@headlessui/react";
+import { Trash2 } from "lucide-react";
+import { Fragment, useState, useEffect } from "react";
 
 const PassengerDetailModal = ({
   countries = [],
@@ -8,37 +8,31 @@ const PassengerDetailModal = ({
   handleOnSubmit,
   isOpen,
   setIsOpen,
+  handleDelete,
 }) => {
   const [passenger, setPassenger] = useState(passengerData || {});
   const [errors, setErrors] = useState({});
-
-  // Get today's date in YYYY-MM-DD format for setting max/min on date inputs
   const today = new Date().toISOString().split("T")[0];
+
   useEffect(() => {
     if (isOpen) {
       if (!passengerData.issueDate) {
         const today = new Date();
 
-        // 10 years ago
         const tenYearsAgo = new Date(today);
         tenYearsAgo.setFullYear(today.getFullYear() - 10);
-        const tenYearsAgoFormatted = tenYearsAgo.toISOString().split("T")[0];
 
-        // Yesterday
         const yesterday = new Date(today);
         yesterday.setDate(today.getDate() - 1);
-        const yesterdayFormatted = yesterday.toISOString().split("T")[0];
 
-        // Tomorrow
         const tomorrow = new Date(today);
         tomorrow.setDate(today.getDate() + 1);
-        const tomorrowFormatted = tomorrow.toISOString().split("T")[0];
 
         setPassenger((prev) => ({
           ...prev,
-          issueDate: yesterdayFormatted,
-          dateOfBirth: tenYearsAgoFormatted,
-          expiryDate: tomorrowFormatted,
+          issueDate: yesterday.toISOString().split("T")[0],
+          dateOfBirth: tenYearsAgo.toISOString().split("T")[0],
+          expiryDate: tomorrow.toISOString().split("T")[0],
         }));
       } else {
         setPassenger(passengerData || {});
@@ -65,7 +59,6 @@ const PassengerDetailModal = ({
     const newErrors = {};
     const todayStr = new Date().toISOString().split("T")[0];
 
-    // --- Enhanced Validation Logic ---
     if (!passenger.fullName) {
       newErrors.fullName = "Wajib diisi";
     } else if (!/^[a-zA-Z\s]+$/.test(passenger.fullName)) {
@@ -78,7 +71,6 @@ const PassengerDetailModal = ({
       newErrors.no = "Nomor paspor hanya boleh berisi angka";
     }
 
-    // --- FIX: Date Validation ---
     if (!passenger.issueDate) {
       newErrors.issueDate = "Wajib diisi";
     } else if (passenger.issueDate > todayStr) {
@@ -99,13 +91,11 @@ const PassengerDetailModal = ({
 
     if (!passenger.dateOfBirth) newErrors.dateOfBirth = "Wajib diisi";
     if (!passenger.nationalityID) newErrors.nationalityID = "Wajib diisi";
-    if (!passenger.issuanceCountryID)
-      newErrors.issuanceCountryID = "Wajib diisi";
+    if (!passenger.issuanceCountryID) newErrors.issuanceCountryID = "Wajib diisi";
     if (!passenger.placeOfBirth) newErrors.placeOfBirth = "Wajib diisi";
     if (passenger.gender === undefined) newErrors.gender = "Wajib diisi";
 
     setErrors(newErrors);
-
     if (Object.keys(newErrors).length > 0) return;
 
     const payload = {
@@ -126,29 +116,54 @@ const PassengerDetailModal = ({
   };
 
   return (
-    <Dialog
-      open={isOpen}
-      onClose={() => setIsOpen(false)}
-      className="relative z-50 text-black "
-    >
-      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-      <div className="fixed inset-0 flex w-screen items-end justify-center p-0">
-        <Dialog.Panel className="w-full  rounded-t-xl md:rounded-xl bg-white p-6 space-y-4 relative overflow-y-auto max-h-[100vh]">
-          <button
-            onClick={() => setIsOpen(false)}
-            className="absolute top-10 right-6 text-gray-500 hover:text-gray-700"
+    <Transition show={isOpen} as={Fragment}>
+      <Dialog onClose={() => setIsOpen(false)} className="relative z-50">
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-200"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-150"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+        </Transition.Child>
+
+        <div className="fixed inset-0 flex items-end justify-center">
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-200"
+            enterFrom="translate-y-full opacity-0"
+            enterTo="translate-y-0 opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="translate-y-0 opacity-100"
+            leaveTo="translate-y-full opacity-0"
           >
-            <X />
-          </button>
+            <Dialog.Panel className="w-full bg-white rounded-t-xl md:rounded-xl p-6 max-h-[95vh] overflow-y-auto">
+              {/* Modal Content Header */}
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-xl font-bold">
+                  Data Penumpang {passenger.index + 1}
+                </h2>
+                {handleDelete && (
+                  <button
+                    onClick={() => {
+                      if (confirm("Hapus penumpang ini?")) {
+                        handleDelete(passenger.index);
+                        setIsOpen(false);
+                      }
+                    }}
+                    className="text-red-500 hover:text-red-700"
+                    title="Hapus penumpang"
+                  >
+                    <Trash2 />
+                  </button>
+                )}
+              </div>
+              <p className="text-sm text-gray-500 mb-4">Isi detail penumpang</p>
 
-          <h2 className="text-xl font-bold">
-            Penumpang {passenger.index + 1} (
-            {passenger.type === 0 ? "Dewasa" : "Anak"})
-          </h2>
-
-          <p className="text-sm text-gray-500 mb-2">Isi detail penumpang</p>
-
-          <div>
+              <div>
             <label className="text-sm font-semibold">Jenis Kelamin</label>
             <div className="flex items-center gap-10 mt-1">
               <label className="flex items-center gap-2 cursor-pointer">
@@ -364,15 +379,17 @@ const PassengerDetailModal = ({
             </div>
           </div>
 
-          <button
-            onClick={handleSubmit}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold mt-6 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            Simpan
-          </button>
-        </Dialog.Panel>
-      </div>
-    </Dialog>
+              <button
+                onClick={handleSubmit}
+                className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold mt-6 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Simpan
+              </button>
+            </Dialog.Panel>
+          </Transition.Child>
+        </div>
+      </Dialog>
+    </Transition>
   );
 };
 

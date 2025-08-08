@@ -47,16 +47,25 @@ const TripCard = ({ trip, route, onSelect }) => {
         Open Gate: {trip.gateOpen} | Close Gate: {trip.gateClose}
       </p>
 
-      <div className="grid grid-cols-2 mt-2 gap-2 bg-white text-black px-3 py-1  text-sm font-medium">
-        <div className="flex flex-col justify-center items-start gap-1">
-          <p className="capitalize text-md">Harga Lokal</p>
-          <p className="capitalize text-md">Harga Turis</p>
+      <div className="grid grid-cols-2 justify-between items-center bg-white mt-5 text-black px-4 py-2 text-sm font-medium border-t border-gray-200">
+        <div className="flex flex-col items-start gap-1">
+          <p className="text-green-600 font-semibold">Tersedia</p>
         </div>
-        <div className="flex flex-col justify-end items-end gap-1">
-          <p className="font-semibold text-lg">{formatRupiah(trip.price)}</p>
-          <p className="font-semibold text-lg">
-            {formatRupiah(trip.touristPrice)}
-          </p>
+        <div className="flex flex-col items-end gap-1">
+          {/* spacer to match height */}
+          <div className="flex justify-between items-center gap gap-5">
+            <div className="text-start">
+              <p className="text-xs text-gray-500">Warga Asing</p>
+              <p className="text-lg font-bold">
+                {formatRupiah(trip.touristPrice)}
+              </p>
+            </div>
+            <p className="text-xl text-sky-500">|</p>
+            <div className="text-end">
+              <p className="text-xs text-gray-500">Warga Indonesia</p>
+              <p className="text-lg font-bold">{formatRupiah(trip.price)}</p>
+            </div>
+          </div>
         </div>
       </div>
     </button>

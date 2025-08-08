@@ -138,59 +138,13 @@ const FormRoutes = ({
     [updateFormData]
   );
 
-  const addPassenger = useCallback(
-    (type) => {
-      const newPassenger = {
-        index: formData.passengers.length,
-        type, // "adult" or "child"
-        gender: 0,
-        fullName: "",
-        no: "",
-        dateOfBirth: "",
-        issueDate: "",
-        expiryDate: "",
-        nationalityID: "",
-        issuanceCountryID: "",
-        placeOfBirth: "",
-      };
-      updateFormData({
-        passengers: [...formData.passengers, newPassenger],
-      });
-    },
-    [formData.passengers, updateFormData]
-  );
+  
 
-  const removePassenger = useCallback(
-    (type) => {
-      const passengersCopy = [...formData.passengers];
-      const indexToRemove = passengersCopy
-        .map((p, i) => ({ ...p, originalIndex: i }))
-        .reverse()
-        .find((p) => p.type === type)?.originalIndex;
-
-      if (indexToRemove !== undefined) {
-        passengersCopy.splice(indexToRemove, 1);
-        updateFormData({ passengers: passengersCopy });
-      }
-    },
-    [formData.passengers, updateFormData]
-  );
+  
   const adultCount = formData.passengers.filter((p) => p.type === 0).length;
   const childCount = formData.passengers.filter((p) => p.type === 1).length;
 
-  const updatePassengerCount = useCallback(
-    (type, newCount) => {
-      const current = formData.passengers.filter((p) => p.type === type).length;
-      const delta = newCount - current;
 
-      if (delta > 0) {
-        for (let i = 0; i < delta; i++) addPassenger(type);
-      } else if (delta < 0) {
-        for (let i = 0; i < Math.abs(delta); i++) removePassenger(type);
-      }
-    },
-    [formData.passengers, addPassenger, removePassenger]
-  );
 
   function formatDateToYYYYMMDD(date) {
     if (!date) return null;
@@ -219,7 +173,7 @@ const FormRoutes = ({
   if (isError || routes.length === 0) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-        <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center">
+        <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm min-h-screen w-full text-center">
           <h2 className="text-lg font-semibold mb-2 text-red-600">
             Gagal Mendapatkan Rute
           </h2>
@@ -401,51 +355,6 @@ const FormRoutes = ({
               )}
             </div>
 
-            {/* Passenger Counts */}
-            <div className="grid grid-cols-2 gap-4 items-center">
-              <div>
-                <p className="text-blue-500 text-sm mb-1">
-                  Dewasa (&gt;12 Tahun)
-                </p>
-                <div className="flex items-center justify-between border rounded-full px-3 py-1 w-full">
-                  <button
-                    onClick={() =>
-                      updatePassengerCount(0, Math.max(adultCount - 1, 1))
-                    }
-                  >
-                    −
-                  </button>
-                  <span>{adultCount}</span>
-                  <button
-                    onClick={() => updatePassengerCount(0, adultCount + 1)}
-                    disabled={formData.passengers.length >= maxPassenger}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-              <div>
-                <p className="text-blue-500 text-sm mb-1">Anak (0–11 Tahun)</p>
-                <div className="flex items-center justify-between border rounded-full px-3 py-1 w-full">
-                  <button
-                    onClick={() =>
-                      updatePassengerCount(1, Math.max(childCount - 1, 0))
-                    }
-                  >
-                    −
-                  </button>
-                  <span>{childCount}</span>
-                  <button
-                    onClick={() =>
-                      updatePassengerCount(1, Math.min(childCount + 1, 9))
-                    }
-                    disabled={formData.passengers.length >= maxPassenger}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-            </div>
             {/* Show error message if routes are empty */}
             {routes.length === 0 && (
               <p className="text-sm text-red-500 text-center">

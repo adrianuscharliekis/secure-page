@@ -14,12 +14,17 @@ import {
   User,
   X,
   AlertCircle,
-  CheckCircle, // Import the success icon
+  CheckCircle,
+  Plus, // Import the success icon
 } from "lucide-react";
 import ImportantNotes from "@/components/sindoferry/ImportantNotes";
 import Confirmation from "@/public/assets/jagaan detail.png";
 import Image from "next/image";
 import { createBooking } from "@/lib/sindoferry";
+import ContactDetailModal from "@/components/sindoferry/ContactDetailModal";
+import TermsConfirmation from "@/components/sindoferry/TermsConfirmation";
+import PriceSummary from "@/components/sindoferry/PriceSummary";
+import BookingConfirmationModal from "@/components/sindoferry/BookingConfirmation";
 
 const FormDetail = ({
   formData,
@@ -31,15 +36,22 @@ const FormDetail = ({
   const [modalOpenIndex, setModalOpenIndex] = useState(null);
   const [isCollapse, setIsCollapse] = useState(false);
   const [confirmation, setConfirmation] = useState(false);
-  const [contact, setContact] = useState(
-    formData.contactDetails || { fullName: "", email: "" }
-  );
+  const [contact, setContact] = useState({
+    fullName: "",
+    phoneNumber: "",
+    email: "",
+    confirmEmail: "",
+    errors: {},
+  });
+
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [bookingError, setBookingError] = useState(null);
   const [bookingSuccess, setBookingSuccess] = useState(false); // State for success message
   const [passengersFilled, setPassengersFilled] = useState(false);
+  const [isOpenContact, setIsOpenContact] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   useEffect(() => {
     const allHaveNationality = formData.passengers.every(
       (p) => !!p.nationalityID
@@ -61,6 +73,40 @@ const FormDetail = ({
       document.body.style.overflow = "unset";
     };
   }, [confirmation]);
+  const addPassenger = useCallback(
+    (type) => {
+      const newPassenger = {
+        index: formData.passengers.length,
+        type, // "adult" or "child"
+        gender: 0,
+        fullName: "",
+        no: "",
+        dateOfBirth: "",
+        issueDate: "",
+        expiryDate: "",
+        nationalityID: "",
+        issuanceCountryID: "",
+        placeOfBirth: "",
+      };
+      updateFormData({
+        passengers: [...formData.passengers, newPassenger],
+      });
+    },
+    [formData.passengers, updateFormData]
+  );
+  const removePassenger = useCallback(
+    (indexToRemove) => {
+      const passengersCopy = [...formData.passengers];
+
+      if (passengersCopy.length <= 1) return;
+
+      if (indexToRemove >= 0 && indexToRemove < passengersCopy.length) {
+        passengersCopy.splice(indexToRemove, 1);
+        updateFormData({ passengers: passengersCopy });
+      }
+    },
+    [formData.passengers, updateFormData]
+  );
 
   const handlePassengerSubmit = useCallback(
     (index, updatedPassenger) => {
@@ -73,42 +119,63 @@ const FormDetail = ({
 
   const handleContactChange = (e) => {
     const { name, value } = e.target;
-    if (name === "fullName") {
-      const filteredValue = value.replace(/[^a-zA-Z\s]/g, "");
-      setContact((prev) => ({ ...prev, [name]: filteredValue }));
-    } else {
-      setContact((prev) => ({ ...prev, [name]: value }));
-    }
+
+    setContact((prev) => ({
+      ...prev,
+      [name]: name === "fullName" ? value.replace(/[^a-zA-Z\s]/g, "") : value,
+      errors: { ...prev.errors, [name]: "" }, // Reset error field saat input berubah
+    }));
   };
 
-  const validateEmail = (email) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const validateContact = () => {
+    const errors = {};
+    const { phoneNumber, email, confirmEmail } = contact;
+
+    if (!/^\d{10,}$/.test(phoneNumber)) {
+      errors.phoneNumber = "Nomor telepon harus minimal 10 digit angka";
+    }
+
+    if (!validateEmail(email)) {
+      errors.email = "Format email tidak valid";
+    }
+
+    if (email !== confirmEmail) {
+      errors.confirmEmail = "Email tidak sama";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setContact((prev) => ({ ...prev, errors }));
+      return false;
+    }
+
+    return true;
   };
 
   const validateForm = () => {
     const newErrors = {};
+
+    // Validasi penumpang
     const allPassengersFilled = formData.passengers.every(
       (p) => p.fullName && p.fullName.trim() !== ""
     );
     if (!allPassengersFilled) {
       newErrors.passengers = "Harap lengkapi semua data penumpang.";
     }
-    if (!contact.fullName.trim()) {
-      newErrors.fullName = "Nama lengkap kontak wajib diisi";
-    }
-    if (!contact.email.trim()) {
-      newErrors.email = "Email kontak wajib diisi";
-    } else if (!validateEmail(contact.email)) {
-      newErrors.email = "Format email tidak valid";
-    }
+
+    // Validasi kontak
+    const contactErrors = validateContact(contact);
+    Object.assign(newErrors, contactErrors);
+
+    // Simpan error
     setErrors(newErrors);
+
     return Object.keys(newErrors).length === 0;
   };
 
   const handleContinue = () => {
     if (validateForm()) {
       updateFormData({ contactDetails: contact });
-      setBookingSuccess(false); // Reset success state when opening modal
+      setBookingSuccess(false);
       setConfirmation(true);
     }
   };
@@ -178,8 +245,9 @@ const FormDetail = ({
       }),
     []
   );
-
-
+  const validateEmail = (email) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
   const submitBooking = async () => {
     setLoading(true);
     setBookingError(null);
@@ -215,7 +283,6 @@ const FormDetail = ({
       // setConfirmation(false);
       setLoading(false);
     }
-    // No finally block for setLoading(false) here, as we want to keep it loading during the redirect delay
   };
 
   return (
@@ -258,7 +325,7 @@ const FormDetail = ({
         {/* Outbound */}
         <div className="space-y-3 w-full">
           <div className="flex items-center justify-between w-full">
-            <span className="text-sm rounded bg-sky-100 px-2 py-1 text-blue-600 font-medium">
+            <span className="text-sm rounded bg-sky-100 px-2 py-1 text-sky-500 font-medium">
               Keberangkatan
             </span>
             <p className="text-sm text-gray-600">
@@ -276,7 +343,7 @@ const FormDetail = ({
         {formData.isRoundTrip && (
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-sm bg-sky-100 px-2 py-1 text-blue-600 font-medium">
+              <span className="text-sm bg-sky-100 px-2 py-1 text-sky-500 font-medium">
                 Kepulangan
               </span>
               <p className="text-sm text-gray-600">
@@ -291,10 +358,27 @@ const FormDetail = ({
           </div>
         )}
 
-        <div className="bg-white p-5 rounded-xl shadow-md space-y-6">
+        <div className="p-5 px-3 bg-white space-y-6">
+          {/* Contact Details Section */}
+          <div className="space-y-4 border-b ">
+            <h3 className="text-md text-gray-700 font-semibold">
+              Lengkapi Data Kontak
+            </h3>
+            <button
+              onClick={() => setIsOpenContact(true)}
+              className="w-full flex justify-between items-center border p-4 rounded-lg bg-white text-left"
+            >
+              <span className="text-sky-500">
+                {contact.fullName?.trim() ? contact.fullName : `Detail Kontak`}
+              </span>
+              <ChevronRight className="text-sky-500" />
+            </button>
+          </div>
           {/* Passengers Section */}
           <div className="space-y-3">
-            <h3 className="text-md font-semibold">Lengkapi Data Penumpang</h3>
+            <h3 className="text-md font-semibold text-gray-700">
+              Lengkapi Data Penumpang
+            </h3>
             {formData.passengers.map((passenger, idx) => (
               <div key={idx}>
                 <button
@@ -305,7 +389,7 @@ const FormDetail = ({
                     className={
                       passenger.fullName?.trim()
                         ? "text-gray-800"
-                        : "text-blue-600"
+                        : "text-sky-500"
                     }
                   >
                     {passenger.fullName?.trim()
@@ -314,7 +398,7 @@ const FormDetail = ({
                           passenger.type === 0 ? "Dewasa" : "Anak"
                         })`}
                   </span>
-                  <ChevronRight className="text-gray-400" />
+                  <ChevronRight className="text-sky-500" />
                 </button>
 
                 <PassengerDetailModal
@@ -323,283 +407,61 @@ const FormDetail = ({
                   handleOnSubmit={(data) => handlePassengerSubmit(idx, data)}
                   isOpen={modalOpenIndex === idx}
                   setIsOpen={() => setModalOpenIndex(null)}
+                  handleDelete={(idx) => {
+                    removePassenger(idx);
+                  }}
                 />
               </div>
             ))}
             {errors.passengers && (
               <p className="text-xs text-red-600 mt-1">{errors.passengers}</p>
             )}
+            <button
+              className="px-10 py-2.5 rounded-3xl border text-sky-500  border-sky-500 gap gap-2 flex items-center justify-center w-full"
+              onClick={() => addPassenger(0)}
+            >
+              <span>
+                <Plus />
+              </span>
+              <span className="font-semibold">Tambah Penumpang</span>
+            </button>
           </div>
-
-          {/* Contact Details Section */}
-          <div className="space-y-4 border-t pt-6">
-            <h3 className="text-md font-semibold">Lengkapi Data Kontak</h3>
-            <p className="text-sm text-gray-600">
-              E-tiket akan dikirimkan ke email yang terdaftar di bawah ini.
-            </p>
-
-            {/* Full Name Field */}
-            <div>
-              <label
-                htmlFor="contactFullName"
-                className="text-sm font-semibold text-gray-800"
-              >
-                Nama Lengkap
-              </label>
-              <div className="relative mt-1">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  id="contactFullName"
-                  name="fullName"
-                  placeholder="Masukkan nama lengkap kontak"
-                  value={contact.fullName}
-                  onChange={handleContactChange}
-                  className={`w-full pl-10 pr-3 py-2 rounded-lg border ${
-                    errors.fullName
-                      ? "border-red-500 bg-red-50"
-                      : "border-gray-300"
-                  } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                />
-              </div>
-              {errors.fullName && (
-                <p className="text-xs text-red-600 mt-1">{errors.fullName}</p>
-              )}
-            </div>
-
-            {/* Email Field */}
-            <div>
-              <label
-                htmlFor="contactEmail"
-                className="text-sm font-semibold text-gray-800"
-              >
-                Email
-              </label>
-              <div className="relative mt-1">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="email"
-                  id="contactEmail"
-                  name="email"
-                  placeholder="contoh@email.com"
-                  value={contact.email}
-                  onChange={handleContactChange}
-                  className={`w-full pl-10 pr-3 py-2 rounded-lg border ${
-                    errors.email
-                      ? "border-red-500 bg-red-50"
-                      : "border-gray-300"
-                  } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                />
-              </div>
-              {errors.email && (
-                <p className="text-xs text-red-600 mt-1">{errors.email}</p>
-              )}
-            </div>
-          </div>
-          {/* Special Needs */}
-          {/* <div className="flex pt-4 items-center space-x-2 border-t">
-            <input
-              type="checkbox"
-              id="specialNeeds"
-              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
-            />
-            <Accessibility className="text-blue-600" />
-            <label htmlFor="specialNeeds" className="text-sm text-gray-700">
-              Apakah Anda memiliki kebutuhan khusus?
-            </label>
-          </div> */}
+          <TermsConfirmation
+            agreed={agreedToTerms}
+            onChange={(e) => setAgreedToTerms(e.target.checked)}
+            error={errors.terms}
+          />
         </div>
-
-        {/* Important Notes */}
-        <ImportantNotes />
 
         <div className="pt-24" />
 
-        {/* Summary Bottom Sheet */}
-        <div className="fixed inset-x-0 bottom-0 bg-white rounded-t-2xl border-t shadow-xl px-5 pt-3 pb-6 z-40">
-          {isCollapse && (
-            <div className="transition-all duration-500 ease-in-out">
-              {/* <div className="mx-auto mb-4 w-12 h-1.5 rounded-full bg-gray-300" /> */}
-              <h2 className="text-lg font-semibold mb-4">Ringkasan Harga</h2>
-
-              <div className="space-y-2 text-sm text-gray-700">
-                
-                <div className="flex justify-between">
-                  <span>Total Ticket</span>
-                  <span className="font-semibold">
-                    Rp. {totalTicketPrice.toLocaleString("id-ID")}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Total Fee</span>
-                  <span className="font-semibold">
-                    Rp. {totalFee.toLocaleString("id-ID")}
-                  </span>
-                </div>
-              </div>
-
-              <div className="my-4 border-t" />
-            </div>
-          )}
-
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-2">
-              <div>
-                <h3 className="text-sm text-gray-500">Total Harga</h3>
-                <p className="text-xl font-bold text-gray-900">
-                  Rp {totalPayment.toLocaleString("id-ID")}
-                </p>
-              </div>
-              <button onClick={() => setIsCollapse((prev) => !prev)}>
-                {isCollapse ? (
-                  <ChevronDown className="cursor-pointer text-gray-500" />
-                ) : (
-                  <ChevronUp className="cursor-pointer text-gray-500" />
-                )}
-              </button>
-            </div>
-            <button
-              className="bg-blue-600 text-white border border-blue-600 px-6 py-2.5 rounded-xl font-semibold hover:bg-blue-700 transition"
-              onClick={handleContinue}
-            >
-              Lanjut
-            </button>
-          </div>
-        </div>
-
+        <PriceSummary
+          formData={formData}
+          handleContinue={handleContinue}
+          passengersFilled={passengersFilled}
+          isAgreed={!agreedToTerms}
+        />
+        <BookingConfirmationModal
+          confirmation={confirmation}
+          setConfirmation={setConfirmation}
+          bookingError={bookingError}
+          setBookingError={setBookingError}
+          bookingSuccess={bookingSuccess}
+          loading={loading}
+          submitBooking={submitBooking}
+        />
         {/* Confirmation Modal Portal */}
-        {confirmation &&
-          isMounted &&
-          ReactDOM.createPortal(
-            <>
-              <div
-                className="fixed inset-0 bg-black/30 z-40"
-                onClick={() => !loading && setConfirmation(false)}
-              />
-              <div className="fixed w-full flex flex-col space-y-5 py-12 items-center justify-center inset-x-0 bottom-0 bg-white rounded-t-2xl border-t shadow-xl z-50">
-                {/* Main Message Area (Success, Error, or Initial) */}
-                {bookingError ? (
-                  <div className="text-center border-b pb-5 w-full">
-                    <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-                    <h1 className="font-semibold text-lg">Booking Gagal</h1>
-                    <p className="text-md text-gray-500 px-10 sm:px-24">
-                      {bookingError}
-                    </p>
-                  </div>
-                ) : bookingSuccess ? (
-                  <div className="text-center border-b pb-5 w-full">
-                    <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-                    <h1 className="font-semibold text-lg">Booking Berhasil!</h1>
-                    <p className="text-md text-gray-500 px-10 sm:px-24">
-                      Anda akan dialihkan ke halaman pembayaran.
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <Image src={Confirmation} width={200} alt="confirm" />
-                    <div className="text-center border-b py-5">
-                      <h1 className="font-semibold text-lg">
-                        Pastikan Data Anda Telah Sesuai
-                      </h1>
-                      <p className="text-md text-gray-500 px-10 sm:px-24">
-                        Data yang telah diisi tidak bisa diubah lagi
-                      </p>
-                    </div>
-                  </>
-                )}
-
-                <div className="flex w-full px-10 flex-col gap-5">
-                  {bookingError ? (
-                    // State 1: Error -> Show only a "Back" button
-                    <button
-                      className="w-full text-blue-600 rounded-2xl px-5 py-3 border border-blue-600"
-                      onClick={() => {
-                        setConfirmation(false);
-                        setBookingError(null); // Reset the error on close
-                      }}
-                    >
-                      Kembali
-                    </button>
-                  ) : bookingSuccess ? (
-                    // State 2: Success -> Show a disabled "Redirecting..." button
-                    <button
-                      className="w-full bg-sky-500 rounded-2xl text-white px-5 py-3 flex items-center justify-center disabled:bg-sky-400 disabled:cursor-not-allowed"
-                      disabled
-                    >
-                      <svg
-                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      <span>Mengalihkan...</span>
-                    </button>
-                  ) : (
-                    // State 3: Initial -> Show "Book Now" and "Back" buttons
-                    <>
-                      <button
-                        className="w-full bg-sky-500 rounded-2xl text-white px-5 py-3 flex items-center justify-center disabled:bg-sky-400 disabled:cursor-not-allowed"
-                        onClick={submitBooking}
-                        disabled={loading}
-                      >
-                        {loading ? (
-                          <>
-                            <svg
-                              className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                            >
-                              <circle
-                                className="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                strokeWidth="4"
-                              ></circle>
-                              <path
-                                className="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                              ></path>
-                            </svg>
-                            <span>Memproses...</span>
-                          </>
-                        ) : (
-                          "Pesan Sekarang"
-                        )}
-                      </button>
-                      <button
-                        className="w-full text-blue-600 rounded-2xl px-5 py-3 border border-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                        onClick={() => setConfirmation(false)}
-                        disabled={loading}
-                      >
-                        Kembali
-                      </button>
-                    </>
-                  )}
-                </div>
-                {/* END: CORRECTED BUTTONS BLOCK */}
-              </div>
-            </>,
-            document.body
-          )}
       </div>
+      <ContactDetailModal
+        contact={contact}
+        isOpen={isOpenContact}
+        onClose={() => {
+          if (validateContact()) {
+            setIsOpenContact(false);
+          }
+        }}
+        updateContact={handleContactChange}
+      />
     </div>
   );
 };
