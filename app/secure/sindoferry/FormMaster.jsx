@@ -28,8 +28,14 @@ const FormMaster = () => {
       tripDateFormatted: null,
     },
     passengers: [],
-    tripClass: "ekonomi",
     availableReturnRoutes: [],
+    contact: {
+      fullName: "",
+      phoneNumber: "",
+      email: "",
+      confirmEmail: "",
+      errors: {},
+    },
   });
 
   const {

@@ -47,13 +47,13 @@ const TripCard = ({ trip, route, onSelect }) => {
         Open Gate: {trip.gateOpen} | Close Gate: {trip.gateClose}
       </p>
 
-      <div className="grid grid-cols-2 justify-between items-center bg-white mt-5 text-black px-4 py-2 text-sm font-medium border-t border-gray-200">
+      <div className="flex justify-between items-center bg-white mt-5 text-black px-4 py-2 text-sm font-medium border-t border-gray-200">
         <div className="flex flex-col items-start gap-1">
           <p className="text-green-600 font-semibold">Tersedia</p>
         </div>
         <div className="flex flex-col items-end gap-1">
           {/* spacer to match height */}
-          <div className="flex justify-between items-center gap gap-5">
+          <div className="flex justify-between items-center gap gap-2">
             <div className="text-start">
               <p className="text-xs text-gray-500">Warga Asing</p>
               <p className="text-lg font-bold">

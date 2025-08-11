@@ -91,7 +91,8 @@ const PassengerDetailModal = ({
 
     if (!passenger.dateOfBirth) newErrors.dateOfBirth = "Wajib diisi";
     if (!passenger.nationalityID) newErrors.nationalityID = "Wajib diisi";
-    if (!passenger.issuanceCountryID) newErrors.issuanceCountryID = "Wajib diisi";
+    if (!passenger.issuanceCountryID)
+      newErrors.issuanceCountryID = "Wajib diisi";
     if (!passenger.placeOfBirth) newErrors.placeOfBirth = "Wajib diisi";
     if (passenger.gender === undefined) newErrors.gender = "Wajib diisi";
 
@@ -164,220 +165,265 @@ const PassengerDetailModal = ({
               <p className="text-sm text-gray-500 mb-4">Isi detail penumpang</p>
 
               <div>
-            <label className="text-sm font-semibold">Jenis Kelamin</label>
-            <div className="flex items-center gap-10 mt-1">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="gender"
-                  value={0}
-                  checked={passenger.gender === 0}
-                  onChange={(e) => setPassenger((p) => ({ ...p, gender: 0 }))}
-                  className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:bg-blue-600 checked:border-blue-600 focus:outline-none"
-                />
-                Laki-laki
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="gender"
-                  value={1}
-                  checked={passenger.gender === 1}
-                  onChange={(e) => setPassenger((p) => ({ ...p, gender: 1 }))}
-                  className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:bg-blue-600 checked:border-blue-600 focus:outline-none"
-                />
-                Perempuan
-              </label>
-            </div>
-            {errors.gender && (
-              <p className="text-xs text-red-600 mt-1">{errors.gender}</p>
-            )}
-          </div>
+                <label className="text-sm font-semibold">Jenis Kelamin</label>
+                <div className="flex items-center gap-10 mt-1">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="gender"
+                      value={0}
+                      checked={passenger.gender === 0}
+                      onChange={(e) =>
+                        setPassenger((p) => ({ ...p, gender: 0 }))
+                      }
+                      className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:bg-blue-600 checked:border-blue-600 focus:outline-none"
+                    />
+                    Laki-laki
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="gender"
+                      value={1}
+                      checked={passenger.gender === 1}
+                      onChange={(e) =>
+                        setPassenger((p) => ({ ...p, gender: 1 }))
+                      }
+                      className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:bg-blue-600 checked:border-blue-600 focus:outline-none"
+                    />
+                    Perempuan
+                  </label>
+                </div>
+                {errors.gender && (
+                  <p className="text-xs text-red-600 mt-1">{errors.gender}</p>
+                )}
+              </div>
+              {/* Jenis Penumpang */}
+              <div className="mt-4">
+                <label className="text-sm font-semibold">Jenis Penumpang</label>
+                <div className="flex items-center gap-10 mt-1">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="type"
+                      value={0} // Dewasa
+                      checked={passenger.type === 0}
+                      onChange={() => setPassenger((p) => ({ ...p, type: 0 }))}
+                      className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:bg-blue-600 checked:border-blue-600 focus:outline-none"
+                    />
+                    Dewasa
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="type"
+                      value={1} // Anak-Anak
+                      checked={passenger.type === 1}
+                      onChange={() => setPassenger((p) => ({ ...p, type: 1 }))}
+                      className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:bg-blue-600 checked:border-blue-600 focus:outline-none"
+                    />
+                    Anak-Anak
+                  </label>
+                </div>
+                {errors.type && (
+                  <p className="text-xs text-red-600 mt-1">{errors.type}</p>
+                )}
+              </div>
 
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-semibold">Nama Lengkap</label>
-              <input
-                type="text"
-                name="fullName"
-                placeholder="Masukkan nama lengkap"
-                value={passenger.fullName || ""}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 rounded border mt-1 ${
-                  errors.fullName
-                    ? "border-red-500 bg-red-50"
-                    : "border-gray-300"
-                }`}
-              />
-              {errors.fullName && (
-                <p className="text-xs text-red-600 mt-1">{errors.fullName}</p>
-              )}
-              <p className="text-xs text-gray-500 mt-1">
-                Sesuai paspor (tanpa tanda baca dan gelar)
-              </p>
-            </div>
+              <div className="space-y-4 mt-4">
+                <div>
+                  <label className="text-sm font-semibold">Nama Lengkap</label>
+                  <input
+                    type="text"
+                    name="fullName"
+                    placeholder="Masukkan nama lengkap"
+                    value={passenger.fullName || ""}
+                    onChange={handleChange}
+                    className={`w-full px-3 py-2 rounded border mt-1 ${
+                      errors.fullName
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-300"
+                    }`}
+                  />
+                  {errors.fullName && (
+                    <p className="text-xs text-red-600 mt-1">
+                      {errors.fullName}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">
+                    Sesuai paspor (tanpa tanda baca dan gelar)
+                  </p>
+                </div>
 
-            <div>
-              <label className="text-sm font-semibold">Nomor Paspor</label>
-              <input
-                type="text"
-                name="no"
-                placeholder="Masukkan nomor paspor"
-                value={passenger.no || ""}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 rounded border mt-1 ${
-                  errors.no ? "border-red-500 bg-red-50" : "border-gray-300"
-                }`}
-              />
-              {errors.no && (
-                <p className="text-xs text-red-600 mt-1">{errors.no}</p>
-              )}
-            </div>
+                <div>
+                  <label className="text-sm font-semibold">Nomor Paspor</label>
+                  <input
+                    type="text"
+                    name="no"
+                    placeholder="Masukkan nomor paspor"
+                    value={passenger.no || ""}
+                    onChange={handleChange}
+                    className={`w-full px-3 py-2 rounded border mt-1 ${
+                      errors.no ? "border-red-500 bg-red-50" : "border-gray-300"
+                    }`}
+                  />
+                  {errors.no && (
+                    <p className="text-xs text-red-600 mt-1">{errors.no}</p>
+                  )}
+                </div>
 
-            <div>
-              <label className="text-sm font-semibold">Tanggal Lahir</label>
-              <input
-                type="date"
-                name="dateOfBirth"
-                value={passenger.dateOfBirth || ""}
-                onChange={handleChange}
-                max={today} // Cannot be born in the future
-                className={`appearance-none w-full px-3 py-2 rounded border mt-1 ${
-                  errors.dateOfBirth
-                    ? "border-red-500 bg-red-50"
-                    : "border-gray-300"
-                }`}
-              />
-              {errors.dateOfBirth && (
-                <p className="text-xs text-red-600 mt-1">
-                  {errors.dateOfBirth}
-                </p>
-              )}
-            </div>
+                <div>
+                  <label className="text-sm font-semibold">Tanggal Lahir</label>
+                  <input
+                    type="date"
+                    name="dateOfBirth"
+                    value={passenger.dateOfBirth || ""}
+                    onChange={handleChange}
+                    max={today} // Cannot be born in the future
+                    className={`appearance-none w-full px-3 py-2 rounded border mt-1 ${
+                      errors.dateOfBirth
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-300"
+                    }`}
+                  />
+                  {errors.dateOfBirth && (
+                    <p className="text-xs text-red-600 mt-1">
+                      {errors.dateOfBirth}
+                    </p>
+                  )}
+                </div>
 
-            <div>
-              <label className="text-sm font-semibold">Tanggal Terbit</label>
-              <input
-                type="date"
-                name="issueDate"
-                value={passenger.issueDate || ""}
-                onChange={handleChange}
-                max={today} // --- FIX: Cannot select a future date ---
-                className={`appearance-none w-full px-3 py-2 rounded border mt-1 ${
-                  errors.issueDate
-                    ? "border-red-500 bg-red-50"
-                    : "border-gray-300"
-                }`}
-              />
-              {errors.issueDate && (
-                <p className="text-xs text-red-600 mt-1">{errors.issueDate}</p>
-              )}
-            </div>
+                <div>
+                  <label className="text-sm font-semibold">
+                    Tanggal Terbit
+                  </label>
+                  <input
+                    type="date"
+                    name="issueDate"
+                    value={passenger.issueDate || ""}
+                    onChange={handleChange}
+                    max={today} // --- FIX: Cannot select a future date ---
+                    className={`appearance-none w-full px-3 py-2 rounded border mt-1 ${
+                      errors.issueDate
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-300"
+                    }`}
+                  />
+                  {errors.issueDate && (
+                    <p className="text-xs text-red-600 mt-1">
+                      {errors.issueDate}
+                    </p>
+                  )}
+                </div>
 
-            <div>
-              <label className="text-sm font-semibold">
-                Tanggal Habis Berlaku
-              </label>
-              <input
-                type="date"
-                name="expiryDate"
-                value={passenger.expiryDate || ""}
-                onChange={handleChange}
-                // --- FIX: Min date is the day after issue date, or tomorrow ---
-                min={
-                  passenger.issueDate
-                    ? new Date(
-                        new Date(passenger.issueDate).getTime() + 86400000
-                      )
-                        .toISOString()
-                        .split("T")[0]
-                    : today
-                }
-                className={`appearance-none w-full px-3 py-2 rounded border mt-1 ${
-                  errors.expiryDate
-                    ? "border-red-500 bg-red-50"
-                    : "border-gray-300"
-                }`}
-              />
-              {errors.expiryDate && (
-                <p className="text-xs text-red-600 mt-1">{errors.expiryDate}</p>
-              )}
-            </div>
+                <div>
+                  <label className="text-sm font-semibold">
+                    Tanggal Habis Berlaku
+                  </label>
+                  <input
+                    type="date"
+                    name="expiryDate"
+                    value={passenger.expiryDate || ""}
+                    onChange={handleChange}
+                    // --- FIX: Min date is the day after issue date, or tomorrow ---
+                    min={
+                      passenger.issueDate
+                        ? new Date(
+                            new Date(passenger.issueDate).getTime() + 86400000
+                          )
+                            .toISOString()
+                            .split("T")[0]
+                        : today
+                    }
+                    className={`appearance-none w-full px-3 py-2 rounded border mt-1 ${
+                      errors.expiryDate
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-300"
+                    }`}
+                  />
+                  {errors.expiryDate && (
+                    <p className="text-xs text-red-600 mt-1">
+                      {errors.expiryDate}
+                    </p>
+                  )}
+                </div>
 
-            <div>
-              <label className="text-sm font-semibold">Kewarganegaraan</label>
-              <select
-                name="nationalityID"
-                value={passenger.nationalityID || ""}
-                onChange={handleChange}
-                className={`appearance-none w-full px-3 py-2 rounded border mt-1 bg-white ${
-                  errors.nationalityID
-                    ? "border-red-500 bg-red-50"
-                    : "border-gray-300"
-                }`}
-              >
-                <option value="">Pilih kewarganegaraan</option>
-                {countries.map((country) => (
-                  <option key={country.id} value={country.id}>
-                    {country.nationality}
-                  </option>
-                ))}
-              </select>
-              {errors.nationalityID && (
-                <p className="text-xs text-red-600 mt-1">
-                  {errors.nationalityID}
-                </p>
-              )}
-            </div>
+                <div>
+                  <label className="text-sm font-semibold">
+                    Kewarganegaraan
+                  </label>
+                  <select
+                    name="nationalityID"
+                    value={passenger.nationalityID || ""}
+                    onChange={handleChange}
+                    className={`appearance-none w-full px-3 py-2 rounded border mt-1 bg-white ${
+                      errors.nationalityID
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-300"
+                    }`}
+                  >
+                    <option value="">Pilih kewarganegaraan</option>
+                    {countries.map((country) => (
+                      <option key={country.id} value={country.id}>
+                        {country.nationality}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.nationalityID && (
+                    <p className="text-xs text-red-600 mt-1">
+                      {errors.nationalityID}
+                    </p>
+                  )}
+                </div>
 
-            <div>
-              <label className="text-sm font-semibold">
-                Negara Penerbit Paspor
-              </label>
-              <select
-                name="issuanceCountryID"
-                value={passenger.issuanceCountryID || ""}
-                onChange={handleChange}
-                className={`appearance-none w-full px-3 py-2 rounded border mt-1 bg-white ${
-                  errors.issuanceCountryID
-                    ? "border-red-500 bg-red-50"
-                    : "border-gray-300"
-                }`}
-              >
-                <option value="">Pilih negara</option>
-                {countries.map((country) => (
-                  <option key={country.id} value={country.id}>
-                    {country.name}
-                  </option>
-                ))}
-              </select>
-              {errors.issuanceCountryID && (
-                <p className="text-xs text-red-600 mt-1">
-                  {errors.issuanceCountryID}
-                </p>
-              )}
-            </div>
+                <div>
+                  <label className="text-sm font-semibold">
+                    Negara Penerbit Paspor
+                  </label>
+                  <select
+                    name="issuanceCountryID"
+                    value={passenger.issuanceCountryID || ""}
+                    onChange={handleChange}
+                    className={`appearance-none w-full px-3 py-2 rounded border mt-1 bg-white ${
+                      errors.issuanceCountryID
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-300"
+                    }`}
+                  >
+                    <option value="">Pilih negara</option>
+                    {countries.map((country) => (
+                      <option key={country.id} value={country.id}>
+                        {country.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.issuanceCountryID && (
+                    <p className="text-xs text-red-600 mt-1">
+                      {errors.issuanceCountryID}
+                    </p>
+                  )}
+                </div>
 
-            <div>
-              <label className="text-sm font-semibold">Tempat Lahir</label>
-              <input
-                type="text"
-                name="placeOfBirth"
-                value={passenger.placeOfBirth || ""}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 rounded border mt-1 ${
-                  errors.placeOfBirth
-                    ? "border-red-500 bg-red-50"
-                    : "border-gray-300"
-                }`}
-              />
-              {errors.placeOfBirth && (
-                <p className="text-xs text-red-600 mt-1">
-                  {errors.placeOfBirth}
-                </p>
-              )}
-            </div>
-          </div>
+                <div>
+                  <label className="text-sm font-semibold">Tempat Lahir</label>
+                  <input
+                    type="text"
+                    name="placeOfBirth"
+                    value={passenger.placeOfBirth || ""}
+                    onChange={handleChange}
+                    className={`w-full px-3 py-2 rounded border mt-1 ${
+                      errors.placeOfBirth
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-300"
+                    }`}
+                  />
+                  {errors.placeOfBirth && (
+                    <p className="text-xs text-red-600 mt-1">
+                      {errors.placeOfBirth}
+                    </p>
+                  )}
+                </div>
+              </div>
 
               <button
                 onClick={handleSubmit}

@@ -39,7 +39,7 @@ export const POST = async (req) => {
         "X-EXTERNAL-ID": externalKey,
       }
     );
-    if (data?.data) {
+    if (data?.plu) {
       return NextResponse.json(
         {
           success: true,

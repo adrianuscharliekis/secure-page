@@ -4,45 +4,16 @@ import { useCallback, useMemo, useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import PassengerDetailModal from "@/components/sindoferry/PassengerDetail";
 import TripCard from "@/components/sindoferry/TripCard";
-import {
-  Accessibility,
-  ArrowLeft,
-  ChevronDown,
-  ChevronRight,
-  ChevronUp,
-  Mail,
-  User,
-  X,
-  AlertCircle,
-  CheckCircle,
-  Plus, // Import the success icon
-} from "lucide-react";
-import ImportantNotes from "@/components/sindoferry/ImportantNotes";
-import Confirmation from "@/public/assets/jagaan detail.png";
-import Image from "next/image";
+import { ArrowLeft, ChevronRight, X, AlertCircle, Plus } from "lucide-react";
 import { createBooking } from "@/lib/sindoferry";
 import ContactDetailModal from "@/components/sindoferry/ContactDetailModal";
 import TermsConfirmation from "@/components/sindoferry/TermsConfirmation";
 import PriceSummary from "@/components/sindoferry/PriceSummary";
 import BookingConfirmationModal from "@/components/sindoferry/BookingConfirmation";
 
-const FormDetail = ({
-  formData,
-  updateFormData,
-  countries,
-  nextStep,
-  prevStep,
-}) => {
+const FormDetail = ({ formData, updateFormData, countries, prevStep }) => {
   const [modalOpenIndex, setModalOpenIndex] = useState(null);
-  const [isCollapse, setIsCollapse] = useState(false);
   const [confirmation, setConfirmation] = useState(false);
-  const [contact, setContact] = useState({
-    fullName: "",
-    phoneNumber: "",
-    email: "",
-    confirmEmail: "",
-    errors: {},
-  });
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -61,7 +32,6 @@ const FormDetail = ({
   }, [formData.passengers]);
 
   useEffect(() => {
-    // Lock body scroll when modal is open
     if (confirmation) {
       document.body.style.overflow = "hidden";
     } else {
@@ -75,6 +45,11 @@ const FormDetail = ({
   }, [confirmation]);
   const addPassenger = useCallback(
     (type) => {
+      if (formData.passengers.length >= 9) {
+        alert("Maximum 9 passengers allowed");
+        return;
+      }
+
       const newPassenger = {
         index: formData.passengers.length,
         type, // "adult" or "child"
@@ -88,12 +63,14 @@ const FormDetail = ({
         issuanceCountryID: "",
         placeOfBirth: "",
       };
+
       updateFormData({
         passengers: [...formData.passengers, newPassenger],
       });
     },
     [formData.passengers, updateFormData]
   );
+
   const removePassenger = useCallback(
     (indexToRemove) => {
       const passengersCopy = [...formData.passengers];
@@ -120,16 +97,21 @@ const FormDetail = ({
   const handleContactChange = (e) => {
     const { name, value } = e.target;
 
-    setContact((prev) => ({
-      ...prev,
-      [name]: name === "fullName" ? value.replace(/[^a-zA-Z\s]/g, "") : value,
-      errors: { ...prev.errors, [name]: "" }, // Reset error field saat input berubah
-    }));
+    updateFormData({
+      contact: {
+        ...formData.contact,
+        [name]: name === "fullName" ? value.replace(/[^a-zA-Z\s]/g, "") : value,
+        errors: {
+          ...formData.contactDetails?.errors,
+          [name]: "", 
+        },
+      },
+    });
   };
 
   const validateContact = () => {
     const errors = {};
-    const { phoneNumber, email, confirmEmail } = contact;
+    const { phoneNumber, email, confirmEmail } = formData.contact;
 
     if (!/^\d{10,}$/.test(phoneNumber)) {
       errors.phoneNumber = "Nomor telepon harus minimal 10 digit angka";
@@ -144,7 +126,6 @@ const FormDetail = ({
     }
 
     if (Object.keys(errors).length > 0) {
-      setContact((prev) => ({ ...prev, errors }));
       return false;
     }
 
@@ -163,7 +144,7 @@ const FormDetail = ({
     }
 
     // Validasi kontak
-    const contactErrors = validateContact(contact);
+    const contactErrors = validateContact(formData.contact);
     Object.assign(newErrors, contactErrors);
 
     // Simpan error
@@ -174,66 +155,10 @@ const FormDetail = ({
 
   const handleContinue = () => {
     if (validateForm()) {
-      updateFormData({ contactDetails: contact });
       setBookingSuccess(false);
       setConfirmation(true);
     }
   };
-
-  const totalTicketPrice = useMemo(() => {
-    const trip = formData.outbound.trip;
-    if (!trip) return 0;
-
-    let total = 0;
-
-    formData.passengers.forEach((p) => {
-      const isLocal =
-        !passengersFilled ||
-        p.nationalityID === "0dbe8cd6-cb51-4e34-ff90-08d7934c8bf2";
-      // before filled: treat as local; otherwise detect based on ID
-      const priceField = isLocal ? trip.price : trip.touristPrice;
-      total += parseInt(priceField);
-      if (formData.isRoundTrip && formData.return.trip) {
-        const ret = formData.return.trip;
-        const returnPriceField = isLocal ? ret.price : ret.touristPrice;
-        total += parseInt(returnPriceField);
-      }
-    });
-
-    return total;
-  }, [
-    passengersFilled,
-    formData.passengers,
-    formData.outbound.trip,
-    formData.return?.trip,
-    formData.isRoundTrip,
-  ]);
-
-  const totalFee = useMemo(() => {
-    const trip = formData.outbound.trip;
-    if (!trip) return 0;
-
-    let feeTotal = 0;
-
-    formData.passengers.forEach(() => {
-      feeTotal += parseFloat(trip.fee);
-      if (formData.isRoundTrip && formData.return.trip) {
-        feeTotal += parseFloat(formData.return.trip.fee);
-      }
-    });
-
-    return feeTotal;
-  }, [
-    formData.passengers,
-    formData.outbound.trip,
-    formData.return?.trip,
-    formData.isRoundTrip,
-  ]);
-
-  const totalPayment = useMemo(
-    () => totalTicketPrice + totalFee,
-    [totalTicketPrice, totalFee]
-  );
 
   const formatDate = useCallback(
     (date) =>
@@ -248,15 +173,17 @@ const FormDetail = ({
   const validateEmail = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
-  const submitBooking = async () => {
+  const 
+  submitBooking = async () => {
     setLoading(true);
     setBookingError(null);
     try {
+      console.log(formData)
       const data = await createBooking(formData, countries);
 
       if (data && data.success && data.data) {
         setBookingSuccess(true); // Set success state to true
-        const url = new URL(process.env.NEXT_PUBLIC_URL_DEEP_LINK);
+        const url = new URL(process.env.NEXT_PUBLIC_URL_DEEP_LINK_ISAKU);
         const param = {
           plu: data.data.plu === null ? "" : data.data.plu,
           paymentcode: data.data.data,
@@ -369,7 +296,7 @@ const FormDetail = ({
               className="w-full flex justify-between items-center border p-4 rounded-lg bg-white text-left"
             >
               <span className="text-sky-500">
-                {contact.fullName?.trim() ? contact.fullName : `Detail Kontak`}
+                {formData.contact.fullName?.trim() ? formData.contact.fullName : `Detail Kontak`}
               </span>
               <ChevronRight className="text-sky-500" />
             </button>
@@ -385,13 +312,7 @@ const FormDetail = ({
                   onClick={() => setModalOpenIndex(idx)}
                   className="w-full flex justify-between items-center border p-4 rounded-lg bg-white text-left"
                 >
-                  <span
-                    className={
-                      passenger.fullName?.trim()
-                        ? "text-gray-800"
-                        : "text-sky-500"
-                    }
-                  >
+                  <span className="text-sky-500">
                     {passenger.fullName?.trim()
                       ? passenger.fullName
                       : `Penumpang ${idx + 1} (${
@@ -453,7 +374,7 @@ const FormDetail = ({
         {/* Confirmation Modal Portal */}
       </div>
       <ContactDetailModal
-        contact={contact}
+        contact={formData.contact}
         isOpen={isOpenContact}
         onClose={() => {
           if (validateContact()) {
