@@ -1,8 +1,9 @@
-import { Dialog, Transition } from '@headlessui/react';
-import { Fragment } from 'react';
-import { AlertCircle, CheckCircle } from 'lucide-react';
-import Image from 'next/image';
+import { Dialog, Transition } from "@headlessui/react";
+import { Fragment } from "react";
+import { AlertCircle, CheckCircle } from "lucide-react";
+import Image from "next/image";
 import Confirmation from "@/public/assets/jagaan detail.png";
+import Failed from "@/public/assets/Failed.png";
 
 export default function BookingConfirmationModal({
   confirmation,
@@ -15,7 +16,13 @@ export default function BookingConfirmationModal({
 }) {
   return (
     <Transition show={confirmation} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={() => !loading && setConfirmation(false)}>
+      <Dialog
+        as="div"
+        className="relative z-50"
+        onClose={() => {
+          if (!loading) setConfirmation();
+        }}
+      >
         {/* Overlay */}
         <Transition.Child
           as={Fragment}
@@ -26,11 +33,16 @@ export default function BookingConfirmationModal({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" aria-hidden="true" />
+          <div
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm"
+            aria-hidden="true"
+          />
         </Transition.Child>
 
         {/* This container is now full-width */}
-        <div className="fixed inset-0 flex items-end"> {/* CHANGED: Removed justify-center and px-4 */}
+        <div className="fixed inset-0 flex items-end">
+          {" "}
+          {/* CHANGED: Removed justify-center and px-4 */}
           {/* Panel Transition */}
           <Transition.Child
             as={Fragment}
@@ -42,10 +54,19 @@ export default function BookingConfirmationModal({
             leaveTo="translate-y-full opacity-0"
           >
             {/* The panel is now scrollable on small screens */}
-            <Dialog.Panel className="w-full max-h-[90vh] overflow-y-auto bg-white rounded-t-2xl border-t shadow-xl p-6 space-y-6"> {/* CHANGED: Added max-h and overflow */}
+            <Dialog.Panel className="w-full max-h-[90vh] overflow-y-auto bg-white rounded-t-2xl border-t shadow-xl p-6 space-y-6">
+              {" "}
+              {/* CHANGED: Added max-h and overflow */}
               {bookingError ? (
-                <div className="text-center border-b pb-4">
-                  <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+                <div className="text-center border-b pb-4 space-y-4">
+                  <Image
+                    src={Failed}
+                    width={100}
+                    alt="confirm"
+                    className="mx-auto"
+                    priority
+                  />
+                  {/* <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" /> */}
                   <h1 className="font-semibold text-lg">Booking Gagal</h1>
                   <p className="text-md text-gray-500 px-4">{bookingError}</p>
                 </div>
@@ -53,26 +74,34 @@ export default function BookingConfirmationModal({
                 <div className="text-center border-b pb-4">
                   <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
                   <h1 className="font-semibold text-lg">Booking Berhasil!</h1>
-                  <p className="text-md text-gray-500 px-4">Anda akan dialihkan ke halaman pembayaran.</p>
+                  <p className="text-md text-gray-500 px-4">
+                    Anda akan dialihkan ke halaman pembayaran.
+                  </p>
                 </div>
               ) : (
                 <>
-                  <Image src={Confirmation} width={200} alt="confirm" className="mx-auto" />
+                  <Image
+                    src={Confirmation}
+                    width={200}
+                    alt="confirm"
+                    className="mx-auto"
+                    priority
+                  />
                   <div className="text-center border-b py-4">
-                    <h1 className="font-semibold text-lg">Pastikan Data Anda Telah Sesuai</h1>
-                    <p className="text-md text-gray-500 px-4">Data yang telah diisi tidak bisa diubah lagi</p>
+                    <h1 className="font-semibold text-lg">
+                      Pastikan Data Anda Telah Sesuai
+                    </h1>
+                    <p className="text-md text-gray-500 px-4">
+                      Data yang telah diisi tidak bisa diubah lagi
+                    </p>
                   </div>
                 </>
               )}
-
               <div className="flex flex-col gap-4">
                 {bookingError ? (
                   <button
                     className="w-full text-sky-500 rounded-2xl px-5 py-3 border border-blue-600"
-                    onClick={() => {
-                      setConfirmation(false);
-                      setBookingError(null);
-                    }}
+                    onClick={setConfirmation}
                   >
                     Kembali
                   </button>
@@ -135,12 +164,12 @@ export default function BookingConfirmationModal({
                           <span>Memproses...</span>
                         </>
                       ) : (
-                        'Pesan Sekarang'
+                        "Pesan Sekarang"
                       )}
                     </button>
                     <button
                       className="w-full text-sky-500 rounded-2xl px-5 py-3 border border-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                      onClick={() => setConfirmation(false)}
+                      onClick={setConfirmation}
                       disabled={loading}
                     >
                       Kembali

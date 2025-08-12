@@ -81,6 +81,7 @@ const ContactDetailModal = ({ contact, isOpen, onClose, updateContact }) => {
                           onChange={updateContact}
                           name="phoneNumber"
                           placeholder="08xxxxxxxxxx"
+                          maxLength={10}
                           className={`mt-1 w-full rounded-md border px-3 py-2 text-sm placeholder-gray-400 ${
                             contact.errors?.phoneNumber
                               ? "border-red-500"

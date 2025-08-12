@@ -4,7 +4,14 @@ import { useCallback, useMemo, useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import PassengerDetailModal from "@/components/sindoferry/PassengerDetail";
 import TripCard from "@/components/sindoferry/TripCard";
-import { ArrowLeft, ChevronRight, X, AlertCircle, Plus } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronRight,
+  X,
+  AlertCircle,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { createBooking } from "@/lib/sindoferry";
 import ContactDetailModal from "@/components/sindoferry/ContactDetailModal";
 import TermsConfirmation from "@/components/sindoferry/TermsConfirmation";
@@ -103,7 +110,7 @@ const FormDetail = ({ formData, updateFormData, countries, prevStep }) => {
         [name]: name === "fullName" ? value.replace(/[^a-zA-Z\s]/g, "") : value,
         errors: {
           ...formData.contactDetails?.errors,
-          [name]: "", 
+          [name]: "",
         },
       },
     });
@@ -173,12 +180,11 @@ const FormDetail = ({ formData, updateFormData, countries, prevStep }) => {
   const validateEmail = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
-  const 
-  submitBooking = async () => {
+  const submitBooking = async () => {
     setLoading(true);
     setBookingError(null);
     try {
-      console.log(formData)
+      console.log(formData);
       const data = await createBooking(formData, countries);
 
       if (data && data.success && data.data) {
@@ -212,6 +218,13 @@ const FormDetail = ({ formData, updateFormData, countries, prevStep }) => {
     }
   };
 
+  const handleConfirmation = () => {
+    setConfirmation(false);
+    setTimeout(() => {
+      setBookingError(null);
+    }, 300); // match Transition duration
+  };
+
   return (
     <div className="bg-gray-50 min-h-screen">
       {/* Header */}
@@ -225,7 +238,7 @@ const FormDetail = ({ formData, updateFormData, countries, prevStep }) => {
       </div>
 
       {/* Booking Error Notification */}
-      {bookingError && (
+      {/* {bookingError && (
         <div
           className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 m-4 rounded-md relative"
           role="alert"
@@ -246,7 +259,7 @@ const FormDetail = ({ formData, updateFormData, countries, prevStep }) => {
             </button>
           </div>
         </div>
-      )}
+      )} */}
 
       <div className="p-4 space-y-6 pt-4">
         {/* Outbound */}
@@ -296,7 +309,9 @@ const FormDetail = ({ formData, updateFormData, countries, prevStep }) => {
               className="w-full flex justify-between items-center border p-4 rounded-lg bg-white text-left"
             >
               <span className="text-sky-500">
-                {formData.contact.fullName?.trim() ? formData.contact.fullName : `Detail Kontak`}
+                {formData.contact.fullName?.trim()
+                  ? formData.contact.fullName
+                  : `Detail Kontak`}
               </span>
               <ChevronRight className="text-sky-500" />
             </button>
@@ -319,7 +334,17 @@ const FormDetail = ({ formData, updateFormData, countries, prevStep }) => {
                           passenger.type === 0 ? "Dewasa" : "Anak"
                         })`}
                   </span>
-                  <ChevronRight className="text-sky-500" />
+                  {passenger.fullName?.trim() ? (
+                    <Trash2
+                      className="text-red-500 cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent parent button click
+                        removePassenger(idx);
+                      }}
+                    />
+                  ) : (
+                    <ChevronRight className="text-sky-500" />
+                  )}
                 </button>
 
                 <PassengerDetailModal
@@ -328,9 +353,6 @@ const FormDetail = ({ formData, updateFormData, countries, prevStep }) => {
                   handleOnSubmit={(data) => handlePassengerSubmit(idx, data)}
                   isOpen={modalOpenIndex === idx}
                   setIsOpen={() => setModalOpenIndex(null)}
-                  handleDelete={(idx) => {
-                    removePassenger(idx);
-                  }}
                 />
               </div>
             ))}
@@ -338,8 +360,12 @@ const FormDetail = ({ formData, updateFormData, countries, prevStep }) => {
               <p className="text-xs text-red-600 mt-1">{errors.passengers}</p>
             )}
             <button
-              className="px-10 py-2.5 rounded-3xl border text-sky-500  border-sky-500 gap gap-2 flex items-center justify-center w-full"
+              className="px-10 py-2.5 rounded-3xl border gap-2 flex items-center justify-center w-full
+             border-sky-500 text-sky-500
+             hover:bg-sky-50
+             disabled:border-gray-300 disabled:text-gray-400 disabled:bg-gray-100 disabled:cursor-not-allowed"
               onClick={() => addPassenger(0)}
+              disabled={formData.passengers.length >= 9}
             >
               <span>
                 <Plus />
@@ -364,7 +390,7 @@ const FormDetail = ({ formData, updateFormData, countries, prevStep }) => {
         />
         <BookingConfirmationModal
           confirmation={confirmation}
-          setConfirmation={setConfirmation}
+          setConfirmation={handleConfirmation}
           bookingError={bookingError}
           setBookingError={setBookingError}
           bookingSuccess={bookingSuccess}

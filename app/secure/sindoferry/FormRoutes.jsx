@@ -138,13 +138,8 @@ const FormRoutes = ({
     [updateFormData]
   );
 
-  
-
-  
   const adultCount = formData.passengers.filter((p) => p.type === 0).length;
   const childCount = formData.passengers.filter((p) => p.type === 1).length;
-
-
 
   function formatDateToYYYYMMDD(date) {
     if (!date) return null;
@@ -179,7 +174,7 @@ const FormRoutes = ({
           </h2>
           <p className="text-gray-700 mb-4">Gagal memuat rute perjalanan.</p>
           <button
-            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="mt-2 px-4 py-2 bg-primary-gradient text-white rounded hover:bg-blue-700"
             onClick={() => window.location.reload()}
           >
             Reload Halaman
@@ -303,7 +298,7 @@ const FormRoutes = ({
                   </span>
                 </button>
                 {showTripCalendar && (
-                  <div className="absolute top-full mt-2 z-10 bg-white rounded-lg shadow-lg border p-5">
+                  <div className="absolute bottom-full mb-2 z-10 bg-white rounded-lg shadow-lg border p-5">
                     <DayPicker
                       mode="single"
                       selected={formData.outbound.tripDate}
@@ -336,7 +331,7 @@ const FormRoutes = ({
                     </span>
                   </button>
                   {showReturnCalendar && (
-                    <div className="absolute top-full mt-2 z-10 bg-white rounded-lg shadow-lg border p-5">
+                    <div className="absolute bottom-full mb-2 z-10 bg-white rounded-lg shadow-lg border p-5">
                       <DayPicker
                         mode="single"
                         selected={formData.return.tripDate}
@@ -365,7 +360,7 @@ const FormRoutes = ({
               className={`w-full mt-4 py-3 rounded-full font-semibold shadow-md transition-colors ${
                 routes.length === 0
                   ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700 text-white"
+                  : "bg-primary-gradient text-white"
               }`}
               onClick={handleSubmit}
               disabled={routes.length === 0}

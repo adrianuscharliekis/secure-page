@@ -54,7 +54,7 @@ const PriceSummary = ({ formData, passengersFilled, handleContinue, isAgreed }) 
           className={`px-6 py-2.5 rounded-xl font-semibold transition border ${
             isAgreed
               ? "bg-gray-300 text-gray-500 border-gray-300 cursor-not-allowed"
-              : "bg-sky-500 text-white border-sky-500 hover:bg-sky-500"
+              : "bg-primary-gradient text-white border-sky-500 hover:bg-sky-500"
           }`}
           onClick={handleContinue}
           disabled={isAgreed}

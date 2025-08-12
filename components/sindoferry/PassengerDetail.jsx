@@ -8,7 +8,6 @@ const PassengerDetailModal = ({
   handleOnSubmit,
   isOpen,
   setIsOpen,
-  handleDelete,
 }) => {
   const [passenger, setPassenger] = useState(passengerData || {});
   const [errors, setErrors] = useState({});
@@ -50,6 +49,22 @@ const PassengerDetailModal = ({
     } else if (name === "no") {
       const filteredValue = value.replace(/[^0-9]/g, "");
       setPassenger((prev) => ({ ...prev, [name]: filteredValue }));
+    } else if (name === "dateOfBirth") {
+      // Calculate age
+      const birthDate = new Date(value);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      const type = age <= 11 ? 1 : 0;
+
+      setPassenger((prev) => ({
+        ...prev,
+        dateOfBirth: value,
+        type,
+      }));
     } else {
       setPassenger((prev) => ({ ...prev, [name]: value }));
     }
@@ -147,20 +162,6 @@ const PassengerDetailModal = ({
                 <h2 className="text-xl font-bold">
                   Data Penumpang {passenger.index + 1}
                 </h2>
-                {handleDelete && (
-                  <button
-                    onClick={() => {
-                      if (confirm("Hapus penumpang ini?")) {
-                        handleDelete(passenger.index);
-                        setIsOpen(false);
-                      }
-                    }}
-                    className="text-red-500 hover:text-red-700"
-                    title="Hapus penumpang"
-                  >
-                    <Trash2 />
-                  </button>
-                )}
               </div>
               <p className="text-sm text-gray-500 mb-4">Isi detail penumpang</p>
 
@@ -198,37 +199,6 @@ const PassengerDetailModal = ({
                   <p className="text-xs text-red-600 mt-1">{errors.gender}</p>
                 )}
               </div>
-              {/* Jenis Penumpang */}
-              <div className="mt-4">
-                <label className="text-sm font-semibold">Jenis Penumpang</label>
-                <div className="flex items-center gap-10 mt-1">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="type"
-                      value={0} // Dewasa
-                      checked={passenger.type === 0}
-                      onChange={() => setPassenger((p) => ({ ...p, type: 0 }))}
-                      className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:bg-blue-600 checked:border-blue-600 focus:outline-none"
-                    />
-                    Dewasa
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="type"
-                      value={1} // Anak-Anak
-                      checked={passenger.type === 1}
-                      onChange={() => setPassenger((p) => ({ ...p, type: 1 }))}
-                      className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:bg-blue-600 checked:border-blue-600 focus:outline-none"
-                    />
-                    Anak-Anak
-                  </label>
-                </div>
-                {errors.type && (
-                  <p className="text-xs text-red-600 mt-1">{errors.type}</p>
-                )}
-              </div>
 
               <div className="space-y-4 mt-4">
                 <div>
@@ -263,6 +233,8 @@ const PassengerDetailModal = ({
                     placeholder="Masukkan nomor paspor"
                     value={passenger.no || ""}
                     onChange={handleChange}
+                    maxLength={10}
+                    minLength={10}
                     className={`w-full px-3 py-2 rounded border mt-1 ${
                       errors.no ? "border-red-500 bg-red-50" : "border-gray-300"
                     }`}
@@ -325,7 +297,6 @@ const PassengerDetailModal = ({
                     name="expiryDate"
                     value={passenger.expiryDate || ""}
                     onChange={handleChange}
-                    // --- FIX: Min date is the day after issue date, or tomorrow ---
                     min={
                       passenger.issueDate
                         ? new Date(
@@ -333,7 +304,11 @@ const PassengerDetailModal = ({
                           )
                             .toISOString()
                             .split("T")[0]
-                        : today
+                        : new Date(
+                            new Date().setMonth(new Date().getMonth() + 6) // 6 months from today
+                          )
+                            .toISOString()
+                            .split("T")[0]
                     }
                     className={`appearance-none w-full px-3 py-2 rounded border mt-1 ${
                       errors.expiryDate

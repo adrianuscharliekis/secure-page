@@ -20,7 +20,7 @@ const TripCard = ({ trip, route, onSelect }) => {
   return (
     <button
       onClick={onSelect}
-      className="ticket-card w-full rounded-2xl bg-gradient-to-br from-blue-700 to-blue-500 text-white shadow-lg overflow-hidden"
+      className="ticket-card w-full rounded-2xl  bg-primary-gradient text-white shadow-lg overflow-hidden"
     >
       <div className="grid grid-cols-3 justify-between px-4 pt-4">
         <div className="text-left">
@@ -56,14 +56,16 @@ const TripCard = ({ trip, route, onSelect }) => {
           <div className="flex justify-between items-center gap gap-2">
             <div className="text-start">
               <p className="text-xs text-gray-500">Warga Asing</p>
-              <p className="text-lg font-bold">
+              <p className="text-base sm:text-lg font-bold">
                 {formatRupiah(trip.touristPrice)}
               </p>
             </div>
             <p className="text-xl text-sky-500">|</p>
             <div className="text-end">
               <p className="text-xs text-gray-500">Warga Indonesia</p>
-              <p className="text-lg font-bold">{formatRupiah(trip.price)}</p>
+              <p className="text-base sm:text-lg font-bold">
+                {formatRupiah(trip.price)}
+              </p>
             </div>
           </div>
         </div>
