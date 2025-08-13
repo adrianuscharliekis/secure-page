@@ -9,7 +9,6 @@ export default function BookingConfirmationModal({
   confirmation,
   setConfirmation,
   bookingError,
-  setBookingError,
   bookingSuccess,
   loading,
   submitBooking,

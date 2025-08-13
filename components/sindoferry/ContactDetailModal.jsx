@@ -1,5 +1,5 @@
 import { Dialog, Transition } from "@headlessui/react";
-import { Fragment } from "react";
+import { Fragment, useEffect } from "react";
 import { InfoIcon } from "lucide-react";
 
 const ContactDetailModal = ({ contact, isOpen, onClose, updateContact }) => {

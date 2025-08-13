@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState, useEffect } from "react";
-import ReactDOM from "react-dom";
+  import { signOut } from "next-auth/react";
 import PassengerDetailModal from "@/components/sindoferry/PassengerDetail";
 import TripCard from "@/components/sindoferry/TripCard";
 import {
@@ -120,23 +120,28 @@ const FormDetail = ({ formData, updateFormData, countries, prevStep }) => {
     const errors = {};
     const { phoneNumber, email, confirmEmail } = formData.contact;
 
-    if (!/^\d{10,}$/.test(phoneNumber)) {
+    // Phone number validation
+    if (!/^\d{10,}$/.test(phoneNumber || "")) {
       errors.phoneNumber = "Nomor telepon harus minimal 10 digit angka";
     }
 
-    if (!validateEmail(email)) {
+    // Email format validation
+    if (!validateEmail(email || "")) {
       errors.email = "Format email tidak valid";
     }
 
+    // Confirm email match validation
     if (email !== confirmEmail) {
       errors.confirmEmail = "Email tidak sama";
     }
 
-    if (Object.keys(errors).length > 0) {
-      return false;
-    }
-
-    return true;
+    updateFormData({
+      contact: {
+        ...formData.contact,
+        errors: errors,
+      },
+    });
+    return Object.keys(errors).length === 0;
   };
 
   const validateForm = () => {
@@ -180,15 +185,17 @@ const FormDetail = ({ formData, updateFormData, countries, prevStep }) => {
   const validateEmail = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
+  // Jangan lupa untuk mengimpor signOut di bagian atas file Anda
+
+
   const submitBooking = async () => {
     setLoading(true);
     setBookingError(null);
     try {
-      console.log(formData);
       const data = await createBooking(formData, countries);
 
       if (data && data.success && data.data) {
-        setBookingSuccess(true); // Set success state to true
+        setBookingSuccess(true);
         const url = new URL(process.env.NEXT_PUBLIC_URL_DEEP_LINK_ISAKU);
         const param = {
           plu: data.data.plu === null ? "" : data.data.plu,
@@ -197,13 +204,17 @@ const FormDetail = ({ formData, updateFormData, countries, prevStep }) => {
         };
         url.search = new URLSearchParams(param).toString();
 
-        // Redirect after a short delay to allow user to see the success message
-        setTimeout(() => {
-          window.location.replace(url.toString());
-        }, 1500); // 1.5 second delay
+        setTimeout(async () => {
+          try {
+            await signOut({ redirect: false });
+            window.location.replace(url.toString());
+          } catch (signOutError) {
+            console.error("Sign out failed:", signOutError);
+            window.location.replace(url.toString());
+          }
+        }, 1500); // jeda 1.5 detik
       } else {
         setBookingError(data?.message || "Booking failed. Please try again.");
-        // setConfirmation(false);
         setLoading(false);
       }
     } catch (error) {
@@ -213,7 +224,6 @@ const FormDetail = ({ formData, updateFormData, countries, prevStep }) => {
           error.message ||
           "An unexpected error occurred."
       );
-      // setConfirmation(false);
       setLoading(false);
     }
   };
@@ -334,12 +344,21 @@ const FormDetail = ({ formData, updateFormData, countries, prevStep }) => {
                           passenger.type === 0 ? "Dewasa" : "Anak"
                         })`}
                   </span>
-                  {passenger.fullName?.trim() ? (
+                  {passenger.fullName?.trim() &&
+                  formData.passengers.length > 1 ? (
                     <Trash2
                       className="text-red-500 cursor-pointer"
                       onClick={(e) => {
-                        e.stopPropagation(); // Prevent parent button click
-                        removePassenger(idx);
+                        e.stopPropagation(); // Mencegah klik pada elemen induk
+
+                        // Menambahkan dialog konfirmasi dalam Bahasa Indonesia
+                        if (
+                          window.confirm(
+                            "Apakah Anda yakin ingin menghapus penumpang ini?"
+                          )
+                        ) {
+                          removePassenger(idx);
+                        }
                       }}
                     />
                   ) : (
@@ -386,7 +405,7 @@ const FormDetail = ({ formData, updateFormData, countries, prevStep }) => {
           formData={formData}
           handleContinue={handleContinue}
           passengersFilled={passengersFilled}
-          isAgreed={!agreedToTerms}
+          isDisabled={!agreedToTerms}
         />
         <BookingConfirmationModal
           confirmation={confirmation}
@@ -403,7 +422,8 @@ const FormDetail = ({ formData, updateFormData, countries, prevStep }) => {
         contact={formData.contact}
         isOpen={isOpenContact}
         onClose={() => {
-          if (validateContact()) {
+          const isFormValid = validateContact();
+          if (isFormValid) {
             setIsOpenContact(false);
           }
         }}

@@ -8,7 +8,6 @@ import ModalRoutesSelect from "@/components/sindoferry/RoutesModal";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css"; // Import the default styles for DayPicker
 import { format } from "date-fns";
-import ModalSelectClass from "@/components/sindoferry/ClassModal";
 import FormRoutesSkeleton from "@/components/sindoferry/skeleton/FormRoutesSkeleton";
 
 const FormRoutes = ({
@@ -165,23 +164,8 @@ const FormRoutes = ({
   if (isLoading) {
     return <FormRoutesSkeleton />;
   }
-  if (isError || routes.length === 0) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-        <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm min-h-screen w-full text-center">
-          <h2 className="text-lg font-semibold mb-2 text-red-600">
-            Gagal Mendapatkan Rute
-          </h2>
-          <p className="text-gray-700 mb-4">Gagal memuat rute perjalanan.</p>
-          <button
-            className="mt-2 px-4 py-2 bg-primary-gradient text-white rounded hover:bg-blue-700"
-            onClick={() => window.location.reload()}
-          >
-            Reload Halaman
-          </button>
-        </div>
-      </div>
-    );
+  if (isError || (!isLoading && routes.length === 0)) {
+    throw new Error("Gagal memuat rute perjalanan. Silakan coba lagi.");
   }
 
   return (

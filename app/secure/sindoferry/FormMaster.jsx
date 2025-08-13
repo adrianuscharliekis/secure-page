@@ -1,12 +1,10 @@
 "use client";
 import {
-  createBooking,
   useCountries,
   useRoutes,
   useTrips,
 } from "@/lib/sindoferry";
 import React, { useCallback, useState } from "react";
-import Loading from "@/components/Loading";
 import FormRoutes from "./FormRoutes";
 import FormTrips from "./FormTrips";
 import FormDetail from "./FormDetail";
